@@ -165,31 +165,6 @@
     </message>
 </context>
 <context>
-    <name>FavoritesBackup</name>
-    <message>
-        <source>WebDAV sign-in failed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Favorites could not be synced, trying again later</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Favorites are up to date</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The file on the server is not a Sailwave favorites file</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>%n favorite(s) added from the server</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
-    </message>
-</context>
-<context>
     <name>FavoritesPage</name>
     <message>
         <source>Other favorites</source>
@@ -279,11 +254,13 @@
         <source>Deleting %n item(s)</source>
         <translation type="unfinished">
             <numerusform></numerusform>
+            <numerusform></numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n selected</source>
         <translation type="unfinished">
+            <numerusform></numerusform>
             <numerusform></numerusform>
         </translation>
     </message>
@@ -328,41 +305,29 @@
     </message>
 </context>
 <context>
-    <name>HomepageDialog</name>
+    <name>FavoritesBackup</name>
     <message>
-        <source>Reset</source>
+        <source>WebDAV sign-in failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Homepage</source>
+        <source>Favorites could not be synced, trying again later</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Homepage URL</source>
+        <source>Favorites are up to date</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>https://…</source>
+        <source>The file on the server is not a Sailwave favorites file</source>
         <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>PlayerBar</name>
-    <message>
-        <source>min</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No station selected</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Track history</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No tracks for this station</source>
-        <translation type="unfinished"></translation>
+    <message numerus="yes">
+        <source>%n favorite(s) added from the server</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -370,6 +335,7 @@
     <message numerus="yes">
         <source>%n favorite(s) added</source>
         <translation type="unfinished">
+            <numerusform></numerusform>
             <numerusform></numerusform>
         </translation>
     </message>
@@ -389,11 +355,13 @@
         <source>%n favorite(s)</source>
         <translation type="unfinished">
             <numerusform></numerusform>
+            <numerusform></numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n group(s)</source>
         <translation type="unfinished">
+            <numerusform></numerusform>
             <numerusform></numerusform>
         </translation>
     </message>
@@ -405,11 +373,13 @@
         <source>%n favorite(s) will be added</source>
         <translation type="unfinished">
             <numerusform></numerusform>
+            <numerusform></numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n favorite(s) will be removed</source>
         <translation type="unfinished">
+            <numerusform></numerusform>
             <numerusform></numerusform>
         </translation>
     </message>
@@ -417,17 +387,20 @@
         <source>%n favorite(s) will change group</source>
         <translation type="unfinished">
             <numerusform></numerusform>
+            <numerusform></numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n group(s) will be added</source>
         <translation type="unfinished">
             <numerusform></numerusform>
+            <numerusform></numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n group(s) will be removed</source>
         <translation type="unfinished">
+            <numerusform></numerusform>
             <numerusform></numerusform>
         </translation>
     </message>
@@ -478,11 +451,13 @@
         <source>%n favorite(s)</source>
         <translation type="unfinished">
             <numerusform></numerusform>
+            <numerusform></numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n group(s)</source>
         <translation type="unfinished">
+            <numerusform></numerusform>
             <numerusform></numerusform>
         </translation>
     </message>
@@ -496,6 +471,71 @@
     </message>
     <message>
         <source>Choose file …</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>SyncConflictPage</name>
+    <message>
+        <source>Sync conflict</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The favorites on the WebDAV server were changed elsewhere since the last sync, e.g. on another device.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Merge both</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recommended. Favorites from the server that are missing here are added, then the result is uploaded. Nothing is deleted.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep this device's</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file on the server is replaced by the favorites of this device. Nextcloud keeps older versions of the file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>HomepageDialog</name>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Homepage</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Homepage URL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>https://…</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PlayerBar</name>
+    <message>
+        <source>min</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No station selected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track history</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No tracks for this station</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -573,6 +613,7 @@
         <source>%n tracks</source>
         <translation>
             <numerusform>%n track</numerusform>
+            <numerusform>%n tracks</numerusform>
         </translation>
     </message>
     <message>
@@ -678,6 +719,7 @@
         <source>%n min</source>
         <translation>
             <numerusform>%n min</numerusform>
+            <numerusform>%n min</numerusform>
         </translation>
     </message>
 </context>
@@ -735,12 +777,14 @@
         <source>%Ln votes</source>
         <translation>
             <numerusform>%Ln vote</numerusform>
+            <numerusform>%Ln votes</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%Ln clicks</source>
         <translation>
             <numerusform>%Ln click</numerusform>
+            <numerusform>%Ln clicks</numerusform>
         </translation>
     </message>
     <message>
@@ -777,33 +821,6 @@
     </message>
     <message>
         <source>Last voted on %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>SyncConflictPage</name>
-    <message>
-        <source>Sync conflict</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The favorites on the WebDAV server were changed elsewhere since the last sync, e.g. on another device.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Merge both</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Recommended. Favorites from the server that are missing here are added, then the result is uploaded. Nothing is deleted.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Keep this device&apos;s</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The file on the server is replaced by the favorites of this device. Nextcloud keeps older versions of the file.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
