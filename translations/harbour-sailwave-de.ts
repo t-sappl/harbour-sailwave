@@ -165,32 +165,6 @@
     </message>
 </context>
 <context>
-    <name>FavoritesBackup</name>
-    <message>
-        <source>WebDAV sign-in failed</source>
-        <translation>WebDAV-Anmeldung fehlgeschlagen</translation>
-    </message>
-    <message>
-        <source>Favorites could not be synced, trying again later</source>
-        <translation>Favoriten konnten nicht abgeglichen werden, neuer Versuch später</translation>
-    </message>
-    <message>
-        <source>Favorites are up to date</source>
-        <translation>Favoriten sind aktuell</translation>
-    </message>
-    <message>
-        <source>The file on the server is not a Sailwave favorites file</source>
-        <translation>Die Datei auf dem Server ist keine Sailwave-Favoritendatei</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n favorite(s) added from the server</source>
-        <translation>
-            <numerusform>%n Favorit vom Server ergänzt</numerusform>
-            <numerusform>%n Favoriten vom Server ergänzt</numerusform>
-        </translation>
-    </message>
-</context>
-<context>
     <name>FavoritesPage</name>
     <message>
         <source>Other favorites</source>
@@ -331,41 +305,29 @@
     </message>
 </context>
 <context>
-    <name>HomepageDialog</name>
+    <name>FavoritesBackup</name>
     <message>
-        <source>Reset</source>
-        <translation>Zurücksetzen</translation>
+        <source>WebDAV sign-in failed</source>
+        <translation>WebDAV-Anmeldung fehlgeschlagen</translation>
     </message>
     <message>
-        <source>Homepage</source>
-        <translation>Homepage</translation>
+        <source>Favorites could not be synced, trying again later</source>
+        <translation>Favoriten konnten nicht abgeglichen werden, neuer Versuch später</translation>
     </message>
     <message>
-        <source>Homepage URL</source>
-        <translation>Homepage-URL</translation>
+        <source>Favorites are up to date</source>
+        <translation>Favoriten sind aktuell</translation>
     </message>
     <message>
-        <source>https://…</source>
-        <translation>https://…</translation>
+        <source>The file on the server is not a Sailwave favorites file</source>
+        <translation>Die Datei auf dem Server ist keine Sailwave-Favoritendatei</translation>
     </message>
-</context>
-<context>
-    <name>PlayerBar</name>
-    <message>
-        <source>min</source>
-        <translation>Min.</translation>
-    </message>
-    <message>
-        <source>No station selected</source>
-        <translation>Kein Sender ausgewählt</translation>
-    </message>
-    <message>
-        <source>Track history</source>
-        <translation>Titelverlauf</translation>
-    </message>
-    <message>
-        <source>No tracks for this station</source>
-        <translation>Keine Titel für diesen Sender</translation>
+    <message numerus="yes">
+        <source>%n favorite(s) added from the server</source>
+        <translation>
+            <numerusform>%n Favorit vom Server ergänzt</numerusform>
+            <numerusform>%n Favoriten vom Server ergänzt</numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -510,6 +472,71 @@
     <message>
         <source>Choose file …</source>
         <translation>Datei wählen …</translation>
+    </message>
+</context>
+<context>
+    <name>SyncConflictPage</name>
+    <message>
+        <source>Sync conflict</source>
+        <translation>Abgleich-Konflikt</translation>
+    </message>
+    <message>
+        <source>The favorites on the WebDAV server were changed elsewhere since the last sync, e.g. on another device.</source>
+        <translation>Die Favoriten auf dem WebDAV-Server wurden seit dem letzten Abgleich anderswo geändert, z. B. auf einem anderen Gerät.</translation>
+    </message>
+    <message>
+        <source>Merge both</source>
+        <translation>Beide zusammenführen</translation>
+    </message>
+    <message>
+        <source>Recommended. Favorites from the server that are missing here are added, then the result is uploaded. Nothing is deleted.</source>
+        <translation>Empfohlen. Favoriten vom Server, die hier fehlen, werden ergänzt, danach wird das Ergebnis hochgeladen. Es wird nichts gelöscht.</translation>
+    </message>
+    <message>
+        <source>Keep this device's</source>
+        <translation>Stand dieses Geräts behalten</translation>
+    </message>
+    <message>
+        <source>The file on the server is replaced by the favorites of this device. Nextcloud keeps older versions of the file.</source>
+        <translation>Die Datei auf dem Server wird durch die Favoriten dieses Geräts ersetzt. Nextcloud bewahrt ältere Versionen der Datei auf.</translation>
+    </message>
+</context>
+<context>
+    <name>HomepageDialog</name>
+    <message>
+        <source>Reset</source>
+        <translation>Zurücksetzen</translation>
+    </message>
+    <message>
+        <source>Homepage</source>
+        <translation>Homepage</translation>
+    </message>
+    <message>
+        <source>Homepage URL</source>
+        <translation>Homepage-URL</translation>
+    </message>
+    <message>
+        <source>https://…</source>
+        <translation>https://…</translation>
+    </message>
+</context>
+<context>
+    <name>PlayerBar</name>
+    <message>
+        <source>min</source>
+        <translation>Min.</translation>
+    </message>
+    <message>
+        <source>No station selected</source>
+        <translation>Kein Sender ausgewählt</translation>
+    </message>
+    <message>
+        <source>Track history</source>
+        <translation>Titelverlauf</translation>
+    </message>
+    <message>
+        <source>No tracks for this station</source>
+        <translation>Keine Titel für diesen Sender</translation>
     </message>
 </context>
 <context>
@@ -795,33 +822,6 @@
     <message>
         <source>Last voted on %1</source>
         <translation>Zuletzt abgestimmt am %1</translation>
-    </message>
-</context>
-<context>
-    <name>SyncConflictPage</name>
-    <message>
-        <source>Sync conflict</source>
-        <translation>Abgleich-Konflikt</translation>
-    </message>
-    <message>
-        <source>The favorites on the WebDAV server were changed elsewhere since the last sync, e.g. on another device.</source>
-        <translation>Die Favoriten auf dem WebDAV-Server wurden seit dem letzten Abgleich anderswo geändert, z. B. auf einem anderen Gerät.</translation>
-    </message>
-    <message>
-        <source>Merge both</source>
-        <translation>Beide zusammenführen</translation>
-    </message>
-    <message>
-        <source>Recommended. Favorites from the server that are missing here are added, then the result is uploaded. Nothing is deleted.</source>
-        <translation>Empfohlen. Favoriten vom Server, die hier fehlen, werden ergänzt, danach wird das Ergebnis hochgeladen. Es wird nichts gelöscht.</translation>
-    </message>
-    <message>
-        <source>Keep this device&apos;s</source>
-        <translation>Stand dieses Geräts behalten</translation>
-    </message>
-    <message>
-        <source>The file on the server is replaced by the favorites of this device. Nextcloud keeps older versions of the file.</source>
-        <translation>Die Datei auf dem Server wird durch die Favoriten dieses Geräts ersetzt. Nextcloud bewahrt ältere Versionen der Datei auf.</translation>
     </message>
 </context>
 <context>
