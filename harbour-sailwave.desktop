@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+X-Nemo-Application-Type=silica-qt5
+Icon=harbour-sailwave
+Exec=harbour-sailwave
+Name=Sailwave
+Name[de]=Sailwave
+
+[X-Sailjail]
+OrganizationName=harbour-sailwave
+ApplicationName=harbour-sailwave
+Permissions=Internet;Audio;Documents;UserDirs
