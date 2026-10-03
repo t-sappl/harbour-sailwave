@@ -31,10 +31,10 @@ More: [app cover](screenshots/cover.png) · [lock screen](screenshots/lock-scree
 - **Languages** – English, German, French, Spanish
 
 ## Installation
-
-- **Chum** – planned (preferred channel, built from this repository)
-- **OpenRepos** – planned
-- **Jolla Store** – possibly later (the app runs in the Sailjail sandbox with a minimal permission set)
+Planned:
+- **Chum** 
+- **OpenRepos**
+- **Jolla Store**
 
 ## Permissions
 

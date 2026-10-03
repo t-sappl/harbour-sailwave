@@ -2,16 +2,6 @@
 
 Open items and plans. Architecture and design decisions are in [`DESIGN.md`](DESIGN.md), tests in [`TEST-PROTOCOL.md`](TEST-PROTOCOL.md).
 
-## Version 1.0 – remaining before the release
-
-- [ ] Spanish translation: check the wording with a native speaker (e.g. "Playlist (M3U)", test 23.13)
-- [ ] `.spec`: set the date of the `%changelog` entry to the release date
-- [ ] Publish the source code on GitHub (including `icons/` and `screenshots/`, without `DESIGN-INTERNAL.md`), tag `v1.0`
-- [ ] Store texts: see [`STORE.md`](STORE.md) (Jolla Store, OpenRepos, Chum)
-- [ ] OpenRepos: upload the packages with description and screenshots
-- [ ] Chum: add the Chum metadata from `STORE.md` to the `.spec` (once the screenshots are online) and build via the Sailfish OBS
-- [ ] Jolla Store (Harbour): submit with the texts from `STORE.md`
-
 ## Version 1.1 – planned
 
 - [ ] **Landscape:** support landscape on all pages (1.0 is portrait only) – check the player bar height, cover, filter chips and dialogs
