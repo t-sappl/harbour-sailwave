@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 .pragma library
 
 // Country recommendations for the advanced search (AdvancedSearchPage).
@@ -230,6 +231,15 @@ function getLocalizedName(country) {
         return country.de || country.name;
     }
     return country.name; // fall back to English
+}
+
+// Country name shown for a station: from the country code (short and, in
+// German, translated - radio-browser's own names are always English and
+// sometimes very long, e.g. "The United Kingdom Of Great Britain And
+// Northern Ireland"). Without a known code: the name as given.
+function displayName(code, fallbackName) {
+    var country = findCountry(code);
+    return country ? getLocalizedName(country) : String(fallbackName || "");
 }
 
 // Great-circle distance in km (haversine)

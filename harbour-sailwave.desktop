@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 [Desktop Entry]
 Type=Application
 X-Nemo-Application-Type=silica-qt5
@@ -5,8 +6,10 @@ Icon=harbour-sailwave
 Exec=harbour-sailwave
 Name=Sailwave
 Name[de]=Sailwave
+# App grid folders are named after common categories
+Categories=AudioVideo;Audio;Player;
 
 [X-Sailjail]
 OrganizationName=harbour-sailwave
 ApplicationName=harbour-sailwave
-Permissions=Internet;Audio;Documents;UserDirs
+Permissions=Internet;Audio;Documents;Downloads;Secrets

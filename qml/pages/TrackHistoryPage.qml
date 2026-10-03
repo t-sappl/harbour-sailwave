@@ -1,7 +1,9 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import QtQuick 2.6
 import Sailfish.Silica 1.0
 import "../"
 import "../TrackText.js" as TrackText
+import "../RadioApi.js" as RadioApi
 
 Page {
     id: trackHistoryPage
@@ -89,18 +91,64 @@ Page {
         if (ringMember && status === PageStatus.Active) {
             appWindow.ringPageActivated(trackHistoryPage)
         }
-        // Scroll while the page slides in
-        if (status === PageStatus.Activating && targetStationKey.length > 0 && !_scrolledToTarget) {
-            _scrolledToTarget = true
-            scrollToStation(targetStationKey)
+        // Scroll while the page slides in, and once more when it is fully
+        // shown: while sliding in, the rows around the target are created and
+        // laid out only then (two-line titles get their final height late),
+        // so the first position can be off and cut the station header in half
+        if (targetStationKey.length > 0 && !_scrolledToTarget) {
+            if (status === PageStatus.Activating) {
+                scrollToStation(targetStationKey)
+            } else if (status === PageStatus.Active) {
+                _scrolledToTarget = true
+                scrollToStation(targetStationKey)
+            }
         }
     }
 
+    // The station's header at the top, with a little space above it so the
+    // name is not cut off at the edge. The same for the first station (going
+    // to the very top including the search field jerked).
     function scrollToStation(key) {
         var index = headerIndex(key)
-        if (index >= 0) {
-            listView.positionViewAtIndex(index, ListView.Beginning)
+        if (index < 0) {
+            return
         }
+        listView.positionViewAtIndex(index, ListView.Beginning)
+        listView.contentY = Math.max(listView.originY, listView.contentY - Theme.paddingLarge)
+    }
+
+    // A station started from this page moves to the very top, is expanded
+    // and shown (the list scrolls to the top). Only for a tap on a track:
+    // new titles arriving while the page is visible still do not re-sort the
+    // groups (applyHistoryChanges).
+    function moveStationToTop(key) {
+        var index = headerIndex(key)
+        if (index < 0 || !groups[key]) {
+            return
+        }
+        groupOrder = [key].concat(groupOrder.filter(function(k) { return k !== key }))
+
+        // Rows of this station: its header plus its visible tracks
+        var count = 1
+        while (index + count < mainListModel.count && !mainListModel.get(index + count).isHeader) {
+            count++
+        }
+        if (index > 0) {
+            mainListModel.move(index, 0, count)
+        }
+        if (isStationCollapsed(key)) {
+            if (filterText.length > 0) {
+                filterCollapsed[key] = false
+            } else {
+                collapsedStations[key] = false
+            }
+            collapseVersion++
+            var tracks = visibleTracks(key)
+            for (var t = 0; t < tracks.length; t++) {
+                mainListModel.insert(1 + t, trackRow(key, tracks[t]))
+            }
+        }
+        listView.positionViewAtBeginning()
     }
 
     // A SilicaListView only creates the rows that are on screen. The former
@@ -112,6 +160,8 @@ Page {
     SilicaListView {
         id: listView
         anchors.fill: parent
+        // Ends above the collapsed PlayerBar (see appWindow.playerBarBaseHeight)
+        anchors.bottomMargin: appWindow.playerBarBaseHeight
         model: mainListModel
         // No current item: otherwise every rebuild of the model (each search
         // letter) moves the current item and the search field loses focus
@@ -164,11 +214,11 @@ Page {
             }
         }
 
-        // Space for the PlayerBar as part of the content (not bottomMargin -
-        // see TopStationsPage for the Qt 5.6 reason)
+        // Space for the expanded part of the PlayerBar as part of the content
+        // (not bottomMargin - see TopStationsPage for the Qt 5.6 reason)
         footer: Item {
             width: listView.width
-            height: appWindow.playerBarHeight + Theme.paddingLarge
+            height: appWindow.playerBarOverlap + Theme.paddingLarge
         }
 
         // Only while expanding/collapsing a station, see toggleStation
@@ -216,7 +266,8 @@ Page {
                     }
 
                     SectionHeader {
-                        text: model.stationName || qsTr("Unknown station")
+                        // Display only: stationName stays the stored key
+                        text: RadioApi.cleanName(model.stationName) || qsTr("Unknown station")
                         anchors.verticalCenter: parent.verticalCenter
                         width: parent.width - stationIcon.width - collapsibleIcon.width - (parent.spacing * 2)
                     }
@@ -254,6 +305,8 @@ Page {
                 }
 
                 onClicked: {
+                    // Captured first: moving the rows recreates this delegate
+                    var stationKey = model.stationKey
                     appWindow.playStation({
                         stationuuid: model.stationuuid || "",
                         name: model.stationName || "",
@@ -262,6 +315,7 @@ Page {
                         favicon: model.favicon || "",
                         homepage: model.homepage || ""
                     })
+                    trackHistoryPage.moveStationToTop(stationKey)
                 }
 
                 Row {
@@ -304,6 +358,7 @@ Page {
                         })
 
                         Label {
+                            id: titleLabel
                             width: parent.width
                             text: textColumn.parts.title || qsTr("Unknown track")
                             color: trackItem.highlighted ? Theme.highlightColor : Theme.primaryColor
@@ -311,6 +366,16 @@ Page {
                             wrapMode: Text.Wrap
                             maximumLineCount: 2
                             elide: Text.ElideRight
+                            // Explicit height from the line count: in Qt 5.6 a
+                            // wrapped + elided Text does not reliably update its
+                            // implicitHeight when the text changes later (iTunes
+                            // title via setProperty), so a two-line title
+                            // overlapped the row below
+                            height: Math.max(1, Math.min(lineCount, 2)) * titleMetrics.height
+                            FontMetrics {
+                                id: titleMetrics
+                                font: titleLabel.font
+                            }
                         }
 
                         Label {
@@ -594,6 +659,8 @@ Page {
     // top, found covers update their row, dropped entries are removed. The
     // order of the groups stays as it is; it is sorted again the next time
     // the page is opened (loadHistory). An emptied history is rebuilt.
+    // Exception: a station started from this page moves to the top right
+    // away (moveStationToTop).
     function historyKey(h) {
         return (h.stationName || "") + "|" + h.timestamp
     }

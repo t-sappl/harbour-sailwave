@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include <sailfishapp.h>
 #include <QGuiApplication>
 #include <QQuickView>
@@ -8,6 +9,7 @@
 #include "artcomposer.h"
 #include "filehelper.h"
 #include "networkaccess.h"
+#include "secretstore.h"
 #include "webdavclient.h"
 
 int main(int argc, char *argv[])
@@ -24,6 +26,8 @@ int main(int argc, char *argv[])
     // Favourites backup / M3U export (files) and WebDAV sync (see I3-I5)
     FileHelper fileHelper;
     WebDavClient webDav;
+    // WebDAV password in Sailfish Secrets instead of the app database
+    SecretStore secretStore;
 
     QScopedPointer<QQuickView> view(SailfishApp::createView());
 
@@ -33,6 +37,7 @@ int main(int argc, char *argv[])
     view->rootContext()->setContextProperty(QStringLiteral("imageCache"), &imageCacheControl);
     view->rootContext()->setContextProperty(QStringLiteral("fileHelper"), &fileHelper);
     view->rootContext()->setContextProperty(QStringLiteral("webDav"), &webDav);
+    view->rootContext()->setContextProperty(QStringLiteral("secretStore"), &secretStore);
 
     view->setSource(SailfishApp::pathTo("qml/harbour-sailwave.qml"));
     view->show();

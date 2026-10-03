@@ -24,7 +24,19 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Station data from the community database %1. Album covers and genres from the iTunes Search API.</source>
+        <source>Station data from the community database %1. Station logos from the stations&apos; websites, missing ones via Google&apos;s favicon service (can be turned off in the settings). Album covers and genres from the iTunes Search API (can be turned off in the settings). Home country detected via ipapi.co or api.country.is (only while set to automatic in the settings).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Development</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Developed with the assistance of an AI model (Claude by Anthropic). All changes are reviewed and tested by the developer on a Jolla Phone (2026).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Report a problem</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -33,6 +45,10 @@
     </message>
     <message>
         <source>Privacy policy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hints will be shown again</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -141,6 +157,97 @@
         <source>Other countries</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Search results appear at the bottom of the page</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>BackupPage</name>
+    <message>
+        <source>Back up favorites</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Format</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Backup (JSON)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Playlist (M3U)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can be restored on this or another device.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>For other radio and media player apps.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>WebDAV server</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Playlist could not be saved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved on the WebDAV server</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>WebDAV sign-in failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>WebDAV server not reachable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not be saved on the WebDAV server</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Backup saved as %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Playlist saved as %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Backup could not be saved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The current state is saved automatically as sailwave-favorites.json. Here you create an additional file with date and time.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Share</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saves the file on this device and opens the share menu</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Share favorites</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>CountryPickerPage</name>
@@ -162,6 +269,31 @@
     <message>
         <source>Sailwave</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>FavoritesBackup</name>
+    <message>
+        <source>WebDAV sign-in failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Favorites could not be synced, trying again later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Favorites are up to date</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file on the server is not a Sailwave favorites file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n favorite(s) added from the server</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -254,13 +386,11 @@
         <source>Deleting %n item(s)</source>
         <translation type="unfinished">
             <numerusform></numerusform>
-            <numerusform></numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n selected</source>
         <translation type="unfinished">
-            <numerusform></numerusform>
             <numerusform></numerusform>
         </translation>
     </message>
@@ -269,31 +399,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Restore favorites …</source>
+        <source>Back up and share</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Back up favorites</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Favorites saved in Documents/Sailwave</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Favorites could not be saved</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Export as M3U playlist</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Playlist saved in Documents/Sailwave</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Playlist could not be saved</source>
+        <source>Restore</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -301,203 +411,6 @@
     <name>GroupNameDialog</name>
     <message>
         <source>Group name</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>FavoritesBackup</name>
-    <message>
-        <source>WebDAV sign-in failed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Favorites could not be synced, trying again later</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Favorites are up to date</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The file on the server is not a Sailwave favorites file</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>%n favorite(s) added from the server</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
-</context>
-<context>
-    <name>RestoreConfirmDialog</name>
-    <message numerus="yes">
-        <source>%n favorite(s) added</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Restore favorites</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Saved</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Content</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>%n favorite(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n group(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Missing favorites and groups are added. Favorites that already exist keep their group and position. Nothing is deleted. The current state is saved as a backup first.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>%n favorite(s) will be added</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n favorite(s) will be removed</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n favorite(s) will change group</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n group(s) will be added</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n group(s) will be removed</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>No changes</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Favorites restored</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Restore mode</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Replace current favorites</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Add missing favorites only</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Changes</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Favorites and groups are set exactly to the backup. The current state is saved as a backup first.</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>RestorePage</name>
-    <message>
-        <source>This file is not a Sailwave favorites backup</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Restore favorites</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Automatic backups</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>%n favorite(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n group(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>No automatic backups yet</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Other file</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Choose file …</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>SyncConflictPage</name>
-    <message>
-        <source>Sync conflict</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The favorites on the WebDAV server were changed elsewhere since the last sync, e.g. on another device.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Merge both</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Recommended. Favorites from the server that are missing here are added, then the result is uploaded. Nothing is deleted.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Keep this device's</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The file on the server is replaced by the favorites of this device. Nextcloud keeps older versions of the file.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -536,6 +449,199 @@
     </message>
     <message>
         <source>No tracks for this station</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>RestoreConfirmDialog</name>
+    <message numerus="yes">
+        <source>%n favorite(s) added</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Restore favorites</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Content</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n favorite(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n group(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Missing favorites and groups are added. Favorites that already exist keep their group and position. Nothing is deleted. The current state is saved as a backup first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n favorite(s) will be added</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n favorite(s) will be removed</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n favorite(s) will change group</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n group(s) will be added</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n group(s) will be removed</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Favorites restored</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace current favorites</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add missing favorites only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Favorites and groups are set exactly to the backup. The current state is saved as a backup first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>With automatic sync, the WebDAV server then has this state as well.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>RestorePage</name>
+    <message>
+        <source>This file is not a Sailwave favorites backup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore favorites</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Automatic backups</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n favorite(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n group(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No automatic backups yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Other file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose file …</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>WebDAV server</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loading …</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Current file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No backup on the server yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file on the server is not a Sailwave favorites file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>WebDAV sign-in failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>WebDAV server not reachable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not be loaded from the WebDAV server</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Only the current file on the server can be restored. Older versions are available in the web interface of Nextcloud (Versions).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved backups</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No saved backups yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Files from Documents and Downloads</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>RingHint</name>
+    <message>
+        <source>Swipe sideways to switch between stations, track history and search</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -582,7 +688,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Used for top stations and recommendations.</source>
+        <source>Used for top stations and recommendations. When set to automatic, the country is detected from the IP address via ipapi.co.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -613,7 +719,6 @@
         <source>%n tracks</source>
         <translation>
             <numerusform>%n track</numerusform>
-            <numerusform>%n tracks</numerusform>
         </translation>
     </message>
     <message>
@@ -653,26 +758,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Favorites</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Save favorites</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Always also in Documents/Sailwave, with the last 5 states as automatic backups.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Only on this device</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Device and WebDAV (e.g. Nextcloud)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>WebDAV URL</source>
         <translation type="unfinished"></translation>
     </message>
@@ -686,6 +771,14 @@
     </message>
     <message>
         <source>Recommended: a separate app password from the security settings of Nextcloud instead of the login password.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The password could not be saved securely and will be lost when the app is closed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The saved password could not be read. Please enter it again.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -712,13 +805,44 @@
         <source>Connection failed – check the URL</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Load missing logos via Google</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>If a station has no usable logo, the domain of its homepage is sent to Google&apos;s favicon service to get the website&apos;s icon. When off, a letter is shown instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Backup and sync</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Favorites are always backed up on this device (Documents/Sailwave, last 5 states).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>WebDAV server (e.g. Nextcloud)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>For backups on your own server and, if wanted, automatic sync between devices.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sync automatically</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Uploads every change and checks for changes from other devices at start-up. When off, the server is only used when backing up or restoring manually.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>SleepBadge</name>
     <message numerus="yes">
         <source>%n min</source>
         <translation>
-            <numerusform>%n min</numerusform>
             <numerusform>%n min</numerusform>
         </translation>
     </message>
@@ -777,14 +901,12 @@
         <source>%Ln votes</source>
         <translation>
             <numerusform>%Ln vote</numerusform>
-            <numerusform>%Ln votes</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%Ln clicks</source>
         <translation>
             <numerusform>%Ln click</numerusform>
-            <numerusform>%Ln clicks</numerusform>
         </translation>
     </message>
     <message>
@@ -821,6 +943,33 @@
     </message>
     <message>
         <source>Last voted on %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>SyncConflictPage</name>
+    <message>
+        <source>Sync conflict</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The favorites on the WebDAV server were changed elsewhere since the last sync, e.g. on another device.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Merge both</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recommended. Favorites from the server that are missing here are added, then the result is uploaded. Nothing is deleted.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep this device&apos;s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file on the server is replaced by the favorites of this device. Nextcloud keeps older versions of the file.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -916,6 +1065,14 @@
     </message>
     <message>
         <source>Manage favorites</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tap the heart next to a station to add it to your favorites.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Groups, backup and more: pull down and choose &quot;Manage favorites&quot;</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1025,6 +1182,10 @@
     </message>
     <message>
         <source>Vote not possible, no connection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tap the arrow for recent tracks and the sleep timer</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

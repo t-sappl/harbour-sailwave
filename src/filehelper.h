@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #ifndef FILEHELPER_H
 #define FILEHELPER_H
 

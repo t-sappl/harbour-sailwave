@@ -24,8 +24,20 @@
         <translation>Fuentes de datos</translation>
     </message>
     <message>
-        <source>Station data from the community database %1. Album covers and genres from the iTunes Search API.</source>
-        <translation>Datos de emisoras de la base de datos comunitaria %1. Carátulas y géneros mediante la API de iTunes Search.</translation>
+        <source>Station data from the community database %1. Station logos from the stations&apos; websites, missing ones via Google&apos;s favicon service (can be turned off in the settings). Album covers and genres from the iTunes Search API (can be turned off in the settings). Home country detected via ipapi.co or api.country.is (only while set to automatic in the settings).</source>
+        <translation>Datos de emisoras de la base de datos comunitaria %1. Logotipos de las emisoras desde sus sitios web; los que faltan, mediante el servicio de favicons de Google (se puede desactivar en los ajustes). Carátulas y géneros mediante la API de iTunes Search (se puede desactivar en los ajustes). País de residencia determinado mediante ipapi.co o api.country.is (solo en modo «Automático» en los ajustes).</translation>
+    </message>
+    <message>
+        <source>Development</source>
+        <translation>Desarrollo</translation>
+    </message>
+    <message>
+        <source>Developed with the assistance of an AI model (Claude by Anthropic). All changes are reviewed and tested by the developer on a Jolla Phone (2026).</source>
+        <translation>Desarrollado con la ayuda de un modelo de IA (Claude de Anthropic). Todos los cambios son revisados y probados por el desarrollador en un Jolla Phone (2026).</translation>
+    </message>
+    <message>
+        <source>Report a problem</source>
+        <translation>Informar de un problema</translation>
     </message>
     <message>
         <source>Source code</source>
@@ -34,6 +46,10 @@
     <message>
         <source>Privacy policy</source>
         <translation>Política de privacidad</translation>
+    </message>
+    <message>
+        <source>Hints will be shown again</source>
+        <translation>Las sugerencias se mostrarán de nuevo</translation>
     </message>
 </context>
 <context>
@@ -141,6 +157,97 @@
         <source>Other countries</source>
         <translation>Otros países</translation>
     </message>
+    <message>
+        <source>Search results appear at the bottom of the page</source>
+        <translation>Los resultados de búsqueda aparecen al final de la página</translation>
+    </message>
+</context>
+<context>
+    <name>BackupPage</name>
+    <message>
+        <source>Back up favorites</source>
+        <translation>Guardar copia de favoritos</translation>
+    </message>
+    <message>
+        <source>Format</source>
+        <translation>Formato</translation>
+    </message>
+    <message>
+        <source>Backup (JSON)</source>
+        <translation>Copia de seguridad (JSON)</translation>
+    </message>
+    <message>
+        <source>Playlist (M3U)</source>
+        <translation>Playlist (M3U)</translation>
+    </message>
+    <message>
+        <source>Can be restored on this or another device.</source>
+        <translation>Se puede restaurar en este u otro dispositivo.</translation>
+    </message>
+    <message>
+        <source>For other radio and media player apps.</source>
+        <translation>Para otras aplicaciones de radio y reproductores.</translation>
+    </message>
+    <message>
+        <source>Save to</source>
+        <translation>Guardar en</translation>
+    </message>
+    <message>
+        <source>This device</source>
+        <translation>Este dispositivo</translation>
+    </message>
+    <message>
+        <source>WebDAV server</source>
+        <translation>Servidor WebDAV</translation>
+    </message>
+    <message>
+        <source>Playlist could not be saved</source>
+        <translation>No se pudo guardar la playlist</translation>
+    </message>
+    <message>
+        <source>Saved on the WebDAV server</source>
+        <translation>Guardado en el servidor WebDAV</translation>
+    </message>
+    <message>
+        <source>WebDAV sign-in failed</source>
+        <translation>Error al iniciar sesión en WebDAV</translation>
+    </message>
+    <message>
+        <source>WebDAV server not reachable</source>
+        <translation>Servidor WebDAV no disponible</translation>
+    </message>
+    <message>
+        <source>Could not be saved on the WebDAV server</source>
+        <translation>No se pudo guardar en el servidor WebDAV</translation>
+    </message>
+    <message>
+        <source>Backup saved as %1</source>
+        <translation>Copia guardada como %1</translation>
+    </message>
+    <message>
+        <source>Playlist saved as %1</source>
+        <translation>Playlist guardada como %1</translation>
+    </message>
+    <message>
+        <source>Backup could not be saved</source>
+        <translation>No se pudo guardar la copia</translation>
+    </message>
+    <message>
+        <source>The current state is saved automatically as sailwave-favorites.json. Here you create an additional file with date and time.</source>
+        <translation>El estado actual se guarda automáticamente como sailwave-favorites.json. Aquí se crea un archivo adicional con fecha y hora.</translation>
+    </message>
+    <message>
+        <source>Share</source>
+        <translation>Compartir</translation>
+    </message>
+    <message>
+        <source>Saves the file on this device and opens the share menu</source>
+        <translation>Guarda el archivo en este dispositivo y abre el menú de compartir</translation>
+    </message>
+    <message>
+        <source>Share favorites</source>
+        <translation>Compartir favoritos</translation>
+    </message>
 </context>
 <context>
     <name>CountryPickerPage</name>
@@ -162,6 +269,32 @@
     <message>
         <source>Sailwave</source>
         <translation>Sailwave</translation>
+    </message>
+</context>
+<context>
+    <name>FavoritesBackup</name>
+    <message>
+        <source>WebDAV sign-in failed</source>
+        <translation>Error al iniciar sesión en WebDAV</translation>
+    </message>
+    <message>
+        <source>Favorites could not be synced, trying again later</source>
+        <translation>No se pudieron sincronizar los favoritos, se reintentará más tarde</translation>
+    </message>
+    <message>
+        <source>Favorites are up to date</source>
+        <translation>Los favoritos están al día</translation>
+    </message>
+    <message>
+        <source>The file on the server is not a Sailwave favorites file</source>
+        <translation>El archivo del servidor no es un archivo de favoritos de Sailwave</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n favorite(s) added from the server</source>
+        <translation>
+            <numerusform>%n favorito añadido desde el servidor</numerusform>
+            <numerusform>%n favoritos añadidos desde el servidor</numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -269,32 +402,12 @@
         <translation>Sincronizar ahora</translation>
     </message>
     <message>
-        <source>Restore favorites …</source>
-        <translation>Restaurar favoritos …</translation>
+        <source>Back up and share</source>
+        <translation>Guardar y compartir</translation>
     </message>
     <message>
-        <source>Back up favorites</source>
-        <translation>Guardar copia de favoritos</translation>
-    </message>
-    <message>
-        <source>Favorites saved in Documents/Sailwave</source>
-        <translation>Favoritos guardados en Documentos/Sailwave</translation>
-    </message>
-    <message>
-        <source>Favorites could not be saved</source>
-        <translation>No se pudieron guardar los favoritos</translation>
-    </message>
-    <message>
-        <source>Export as M3U playlist</source>
-        <translation>Exportar como lista M3U</translation>
-    </message>
-    <message>
-        <source>Playlist saved in Documents/Sailwave</source>
-        <translation>Lista guardada en Documentos/Sailwave</translation>
-    </message>
-    <message>
-        <source>Playlist could not be saved</source>
-        <translation>No se pudo guardar la lista</translation>
+        <source>Restore</source>
+        <translation>Restaurar</translation>
     </message>
 </context>
 <context>
@@ -305,29 +418,41 @@
     </message>
 </context>
 <context>
-    <name>FavoritesBackup</name>
+    <name>HomepageDialog</name>
     <message>
-        <source>WebDAV sign-in failed</source>
-        <translation>Error al iniciar sesión en WebDAV</translation>
+        <source>Reset</source>
+        <translation>Restablecer</translation>
     </message>
     <message>
-        <source>Favorites could not be synced, trying again later</source>
-        <translation>No se pudieron sincronizar los favoritos, se reintentará más tarde</translation>
+        <source>Homepage</source>
+        <translation>Sitio web</translation>
     </message>
     <message>
-        <source>Favorites are up to date</source>
-        <translation>Los favoritos están al día</translation>
+        <source>Homepage URL</source>
+        <translation>URL del sitio web</translation>
     </message>
     <message>
-        <source>The file on the server is not a Sailwave favorites file</source>
-        <translation>El archivo del servidor no es un archivo de favoritos de Sailwave</translation>
+        <source>https://…</source>
+        <translation>https://…</translation>
     </message>
-    <message numerus="yes">
-        <source>%n favorite(s) added from the server</source>
-        <translation>
-            <numerusform>%n favorito añadido desde el servidor</numerusform>
-            <numerusform>%n favoritos añadidos desde el servidor</numerusform>
-        </translation>
+</context>
+<context>
+    <name>PlayerBar</name>
+    <message>
+        <source>min</source>
+        <translation>min</translation>
+    </message>
+    <message>
+        <source>No station selected</source>
+        <translation>Ninguna emisora seleccionada</translation>
+    </message>
+    <message>
+        <source>Track history</source>
+        <translation>Historial de canciones</translation>
+    </message>
+    <message>
+        <source>No tracks for this station</source>
+        <translation>No hay canciones para esta emisora</translation>
     </message>
 </context>
 <context>
@@ -432,6 +557,10 @@
         <source>Favorites and groups are set exactly to the backup. The current state is saved as a backup first.</source>
         <translation>Los favoritos y los grupos quedan exactamente como en la copia. Antes se guarda una copia del estado actual.</translation>
     </message>
+    <message>
+        <source>With automatic sync, the WebDAV server then has this state as well.</source>
+        <translation>Con la sincronización automática, el servidor WebDAV tendrá después también este estado.</translation>
+    </message>
 </context>
 <context>
     <name>RestorePage</name>
@@ -473,70 +602,60 @@
         <source>Choose file …</source>
         <translation>Elegir archivo …</translation>
     </message>
+    <message>
+        <source>WebDAV server</source>
+        <translation>Servidor WebDAV</translation>
+    </message>
+    <message>
+        <source>Loading …</source>
+        <translation>Cargando …</translation>
+    </message>
+    <message>
+        <source>Current file</source>
+        <translation>Archivo actual</translation>
+    </message>
+    <message>
+        <source>No backup on the server yet</source>
+        <translation>Aún no hay copia en el servidor</translation>
+    </message>
+    <message>
+        <source>The file on the server is not a Sailwave favorites file</source>
+        <translation>El archivo del servidor no es un archivo de favoritos de Sailwave</translation>
+    </message>
+    <message>
+        <source>WebDAV sign-in failed</source>
+        <translation>Error al iniciar sesión en WebDAV</translation>
+    </message>
+    <message>
+        <source>WebDAV server not reachable</source>
+        <translation>Servidor WebDAV no disponible</translation>
+    </message>
+    <message>
+        <source>Could not be loaded from the WebDAV server</source>
+        <translation>No se pudo cargar desde el servidor WebDAV</translation>
+    </message>
+    <message>
+        <source>Only the current file on the server can be restored. Older versions are available in the web interface of Nextcloud (Versions).</source>
+        <translation>Solo se puede restaurar el archivo actual del servidor. Las versiones anteriores están en la interfaz web de Nextcloud (Versiones).</translation>
+    </message>
+    <message>
+        <source>Saved backups</source>
+        <translation>Copias guardadas</translation>
+    </message>
+    <message>
+        <source>No saved backups yet</source>
+        <translation>Aún no hay copias guardadas</translation>
+    </message>
+    <message>
+        <source>Files from Documents and Downloads</source>
+        <translation>Archivos de las carpetas Documentos y Descargas</translation>
+    </message>
 </context>
 <context>
-    <name>SyncConflictPage</name>
+    <name>RingHint</name>
     <message>
-        <source>Sync conflict</source>
-        <translation>Conflicto de sincronización</translation>
-    </message>
-    <message>
-        <source>The favorites on the WebDAV server were changed elsewhere since the last sync, e.g. on another device.</source>
-        <translation>Los favoritos del servidor WebDAV se cambiaron en otro lugar desde la última sincronización, p. ej. en otro dispositivo.</translation>
-    </message>
-    <message>
-        <source>Merge both</source>
-        <translation>Combinar ambos</translation>
-    </message>
-    <message>
-        <source>Recommended. Favorites from the server that are missing here are added, then the result is uploaded. Nothing is deleted.</source>
-        <translation>Recomendado. Se añaden los favoritos del servidor que faltan aquí y luego se sube el resultado. No se elimina nada.</translation>
-    </message>
-    <message>
-        <source>Keep this device's</source>
-        <translation>Conservar los de este dispositivo</translation>
-    </message>
-    <message>
-        <source>The file on the server is replaced by the favorites of this device. Nextcloud keeps older versions of the file.</source>
-        <translation>El archivo del servidor se sustituye por los favoritos de este dispositivo. Nextcloud conserva versiones anteriores del archivo.</translation>
-    </message>
-</context>
-<context>
-    <name>HomepageDialog</name>
-    <message>
-        <source>Reset</source>
-        <translation>Restablecer</translation>
-    </message>
-    <message>
-        <source>Homepage</source>
-        <translation>Sitio web</translation>
-    </message>
-    <message>
-        <source>Homepage URL</source>
-        <translation>URL del sitio web</translation>
-    </message>
-    <message>
-        <source>https://…</source>
-        <translation>https://…</translation>
-    </message>
-</context>
-<context>
-    <name>PlayerBar</name>
-    <message>
-        <source>min</source>
-        <translation>min</translation>
-    </message>
-    <message>
-        <source>No station selected</source>
-        <translation>Ninguna emisora seleccionada</translation>
-    </message>
-    <message>
-        <source>Track history</source>
-        <translation>Historial de canciones</translation>
-    </message>
-    <message>
-        <source>No tracks for this station</source>
-        <translation>No hay canciones para esta emisora</translation>
+        <source>Swipe sideways to switch between stations, track history and search</source>
+        <translation>Deslizar hacia los lados para cambiar entre emisoras, historial de canciones y búsqueda</translation>
     </message>
 </context>
 <context>
@@ -582,8 +701,8 @@
         <translation>Automático</translation>
     </message>
     <message>
-        <source>Used for top stations and recommendations.</source>
-        <translation>Se usa para las emisoras principales y las recomendaciones.</translation>
+        <source>Used for top stations and recommendations. When set to automatic, the country is detected from the IP address via ipapi.co.</source>
+        <translation>Se usa para las emisoras principales y las recomendaciones. En modo «Automático», el país se determina a partir de la dirección IP mediante ipapi.co.</translation>
     </message>
     <message>
         <source>Privacy</source>
@@ -653,26 +772,6 @@
         <translation>Vota automáticamente por la emisora en radio-browser.info al guardarla como favorita. Esto apoya a la comunidad de Radio Browser. Como máximo un voto por emisora y día.</translation>
     </message>
     <message>
-        <source>Favorites</source>
-        <translation>Favoritos</translation>
-    </message>
-    <message>
-        <source>Save favorites</source>
-        <translation>Guardar favoritos</translation>
-    </message>
-    <message>
-        <source>Always also in Documents/Sailwave, with the last 5 states as automatic backups.</source>
-        <translation>Siempre también en Documentos/Sailwave, con los 5 últimos estados como copias automáticas.</translation>
-    </message>
-    <message>
-        <source>Only on this device</source>
-        <translation>Solo en el dispositivo</translation>
-    </message>
-    <message>
-        <source>Device and WebDAV (e.g. Nextcloud)</source>
-        <translation>Dispositivo y WebDAV (p. ej. Nextcloud)</translation>
-    </message>
-    <message>
         <source>WebDAV URL</source>
         <translation>URL de WebDAV</translation>
     </message>
@@ -687,6 +786,14 @@
     <message>
         <source>Recommended: a separate app password from the security settings of Nextcloud instead of the login password.</source>
         <translation>Recomendado: una contraseña de aplicación propia de los ajustes de seguridad de Nextcloud en lugar de la contraseña de inicio de sesión.</translation>
+    </message>
+    <message>
+        <source>The password could not be saved securely and will be lost when the app is closed.</source>
+        <translation>No se pudo guardar la contraseña de forma segura; se perderá al cerrar la aplicación.</translation>
+    </message>
+    <message>
+        <source>The saved password could not be read. Please enter it again.</source>
+        <translation>No se pudo leer la contraseña guardada. Es necesario introducirla de nuevo.</translation>
     </message>
     <message>
         <source>Test connection</source>
@@ -711,6 +818,38 @@
     <message>
         <source>Connection failed – check the URL</source>
         <translation>Error de conexión – comprobar la URL</translation>
+    </message>
+    <message>
+        <source>Load missing logos via Google</source>
+        <translation>Cargar los logotipos que faltan mediante Google</translation>
+    </message>
+    <message>
+        <source>If a station has no usable logo, the domain of its homepage is sent to Google&apos;s favicon service to get the website&apos;s icon. When off, a letter is shown instead.</source>
+        <translation>Si una emisora no tiene un logotipo utilizable, el dominio de su sitio web se envía al servicio de favicons de Google para obtener el icono del sitio. Desactivado, se muestra una letra en su lugar.</translation>
+    </message>
+    <message>
+        <source>Backup and sync</source>
+        <translation>Copia de seguridad y sincronización</translation>
+    </message>
+    <message>
+        <source>Favorites are always backed up on this device (Documents/Sailwave, last 5 states).</source>
+        <translation>Los favoritos siempre se guardan en este dispositivo (Documentos/Sailwave, últimos 5 estados).</translation>
+    </message>
+    <message>
+        <source>WebDAV server (e.g. Nextcloud)</source>
+        <translation>Servidor WebDAV (p. ej. Nextcloud)</translation>
+    </message>
+    <message>
+        <source>For backups on your own server and, if wanted, automatic sync between devices.</source>
+        <translation>Para copias en un servidor propio y, si se desea, sincronización automática entre dispositivos.</translation>
+    </message>
+    <message>
+        <source>Sync automatically</source>
+        <translation>Sincronizar automáticamente</translation>
+    </message>
+    <message>
+        <source>Uploads every change and checks for changes from other devices at start-up. When off, the server is only used when backing up or restoring manually.</source>
+        <translation>Sube cada cambio y comprueba al iniciar si hay cambios de otros dispositivos. Desactivado, el servidor solo se usa al guardar o restaurar manualmente.</translation>
     </message>
 </context>
 <context>
@@ -825,6 +964,33 @@
     </message>
 </context>
 <context>
+    <name>SyncConflictPage</name>
+    <message>
+        <source>Sync conflict</source>
+        <translation>Conflicto de sincronización</translation>
+    </message>
+    <message>
+        <source>The favorites on the WebDAV server were changed elsewhere since the last sync, e.g. on another device.</source>
+        <translation>Los favoritos del servidor WebDAV se cambiaron en otro lugar desde la última sincronización, p. ej. en otro dispositivo.</translation>
+    </message>
+    <message>
+        <source>Merge both</source>
+        <translation>Combinar ambos</translation>
+    </message>
+    <message>
+        <source>Recommended. Favorites from the server that are missing here are added, then the result is uploaded. Nothing is deleted.</source>
+        <translation>Recomendado. Se añaden los favoritos del servidor que faltan aquí y luego se sube el resultado. No se elimina nada.</translation>
+    </message>
+    <message>
+        <source>Keep this device&apos;s</source>
+        <translation>Conservar los de este dispositivo</translation>
+    </message>
+    <message>
+        <source>The file on the server is replaced by the favorites of this device. Nextcloud keeps older versions of the file.</source>
+        <translation>El archivo del servidor se sustituye por los favoritos de este dispositivo. Nextcloud conserva versiones anteriores del archivo.</translation>
+    </message>
+</context>
+<context>
     <name>TopStationsPage</name>
     <message>
         <source>Settings</source>
@@ -917,6 +1083,14 @@
     <message>
         <source>Manage favorites</source>
         <translation>Gestionar favoritos</translation>
+    </message>
+    <message>
+        <source>Tap the heart next to a station to add it to your favorites.</source>
+        <translation>Tocar el corazón junto a una emisora para añadirla a favoritos.</translation>
+    </message>
+    <message>
+        <source>Groups, backup and more: pull down and choose &quot;Manage favorites&quot;</source>
+        <translation>Grupos, copia de seguridad y más: tirar hacia abajo y elegir «Gestionar favoritos»</translation>
     </message>
 </context>
 <context>
@@ -1026,6 +1200,10 @@
     <message>
         <source>Vote not possible, no connection</source>
         <translation>No se puede votar, sin conexión</translation>
+    </message>
+    <message>
+        <source>Tap the arrow for recent tracks and the sleep timer</source>
+        <translation>Tocar la flecha para ver las últimas canciones y el temporizador de apagado</translation>
     </message>
 </context>
 </TS>

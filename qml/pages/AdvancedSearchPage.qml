@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import QtQuick 2.6
 import QtQuick.Layouts 1.1
 import Sailfish.Silica 1.0
@@ -43,6 +44,9 @@ Page {
     onStatusChanged: {
         if (ringMember && status === PageStatus.Active) {
             appWindow.ringPageActivated(searchPage)
+        }
+        if (status === PageStatus.Deactivating) {
+            searchResultsHint.dismiss()
         }
         // Load the popular genres/languages as soon as the page is shown for
         // the first time, so they are there before a filter is opened
@@ -769,6 +773,10 @@ Page {
                 }
             })
         }
+        // With a typed text: names starting with it first, then names
+        // containing it, then the rest - each group in the chosen order
+        // (popular / A-Z). Only filters: unchanged.
+        results = RadioApi.groupByNameMatch(results, tokens.join(" "))
 
         searchResultsModel.clear()
         for (var j = 0; j < results.length && j < 100; j++) {
@@ -779,6 +787,8 @@ Page {
     SilicaListView {
         id: listView
         anchors.fill: parent
+        // Ends above the collapsed PlayerBar (see appWindow.playerBarBaseHeight)
+        anchors.bottomMargin: appWindow.playerBarBaseHeight
 
         currentIndex: -1
 
@@ -1004,7 +1014,7 @@ Page {
 
             Item {
                 width: parent.width
-                height: appWindow.playerBarHeight
+                height: appWindow.playerBarOverlap
             }
         }
 
@@ -1024,6 +1034,49 @@ Page {
 
 
     ListModel { id: searchResultsModel }
+
+    // --- One-time hint after the first search: the results are listed
+    // below the filters, i.e. possibly off screen while filters are open.
+    // Disappears on tap, after 8 s or when the page is left - and never
+    // comes back.
+    onSearchDoneChanged: {
+        if (searchDone && status === PageStatus.Active && !appWindow.appSettings.searchResultsHintShown) {
+            searchResultsHint.shown = true
+            searchResultsHintHideTimer.restart()
+        }
+    }
+
+    InteractionHintLabel {
+        id: searchResultsHint
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: appWindow.playerBarHeight
+        width: parent.width
+        z: 10
+        text: qsTr("Search results appear at the bottom of the page")
+        property bool shown: false
+        opacity: shown && searchPage.status === PageStatus.Active ? 1.0 : 0.0
+        visible: opacity > 0
+        Behavior on opacity { FadeAnimation { duration: 400 } }
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: searchResultsHint.dismiss()
+        }
+
+        function dismiss() {
+            if (shown) {
+                shown = false
+                searchResultsHintHideTimer.stop()
+                appWindow.appSettings.searchResultsHintShown = true
+            }
+        }
+    }
+
+    Timer {
+        id: searchResultsHintHideTimer
+        interval: 8000
+        onTriggered: searchResultsHint.dismiss()
+    }
 
     Timer {
         id: searchTimer

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #ifndef NETWORKACCESS_H
 #define NETWORKACCESS_H
 

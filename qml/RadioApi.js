@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 .pragma library
 Qt.include("ServerPool.js")
 
@@ -60,6 +61,26 @@ var itunesGenreTags = {
     "children's music": "children"
 };
 
+// Tags that describe the kind of station rather than its programme
+// ("public radio", "news", "traffic", ...). Two stations sharing one of them
+// are only similar within the same country - a public radio station in
+// Houston has nothing in common with one in Slovenia. Used by the similar
+// stations (StationInfoPage).
+var typeTags = {
+    "public radio": true, "public": true, "public service": true,
+    "international": true, "government": true,
+    "community radio": true, "community": true,
+    "college radio": true, "college": true, "university radio": true, "student radio": true,
+    "news": true, "local news": true, "news talk": true, "talk": true,
+    "traffic": true, "information": true,
+    "regional": true, "local": true, "local radio": true,
+    "commercial": true, "non-commercial": true
+};
+
+function isTypeTag(tag) {
+    return typeTags[String(tag || "").toLowerCase()] === true;
+}
+
 function tagForItunesGenre(genre) {
     var key = String(genre || "").toLowerCase().replace(/^\s+|\s+$/g, "");
     if (key.length === 0) {
@@ -82,9 +103,18 @@ function apiUrl(path) {
     return "https://server.api.radio-browser.info/json/" + path;
 }
 
+// Station names at radio-browser sometimes start with spaces or tabs or
+// contain line breaks (e.g. "  88.9 NOTICIAS", "RADIO MARIAM ARABIC\n...").
+// In the one-line lists that shifted the name to the right or made the row
+// overflow into the next one, and A-Z put such names first. All whitespace
+// runs become one space, the ends are trimmed.
+function cleanName(name) {
+    return String(name || "").replace(/[\s\u200B\uFEFF]+/g, " ").trim();
+}
+
 function stationFromApi(s) {
     return {
-        name: s.name || "",
+        name: cleanName(s.name),
         country: s.country || "",
         language: s.language || "",
         countrycode: s.countrycode || "",
@@ -97,8 +127,30 @@ function stationFromApi(s) {
         tags: s.tags || "",
         stationuuid: s.stationuuid || "",
         favicon: s.favicon || "",
-        homepage: s.homepage || ""
+        homepage: s.homepage || "",
+        // "2026-01-14 22:54:03" (UTC) - compares correctly as text
+        lastchangetime: s.lastchangetime || ""
     };
+}
+
+// Search results for a typed text: stations whose name starts with the
+// phrase first, then names containing it as a whole, then all other matches
+// (each word may match anywhere, e.g. "si" in "blasmusik"). The order within
+// each group is kept, so the caller sorts first (A-Z, popularity, ...) and
+// then groups. phrase: the lowercased search words joined by one space;
+// empty = list unchanged. Used by the quick search on the start page and
+// the advanced search.
+function groupByNameMatch(list, phrase) {
+    if (!phrase) {
+        return list.slice();
+    }
+    var groups = [[], [], []];
+    for (var i = 0; i < list.length; i++) {
+        var name = String(list[i].name || "").toLowerCase();
+        var pos = name.indexOf(phrase);
+        groups[pos === 0 ? 0 : (pos > 0 ? 1 : 2)].push(list[i]);
+    }
+    return groups[0].concat(groups[1], groups[2]);
 }
 
 function popularity(station) {
@@ -173,8 +225,37 @@ function requestJson(url, userAgent, callback) {
     tryRequest();
 }
 
+// radio-browser sometimes lists the same stream twice (separate entries
+// with their own name, tags and votes). The app identifies a station by its
+// stream URL (favourites, history, "now playing"), so only one is kept: the
+// one with more tags (up to 5 count - tag lists are what the similar stations
+// and the search work with) plus more popularity (log10, so votes/clicks
+// weigh about as much as one or two tags). Equal: the entry changed most
+// recently (lastchangetime, i.e. maintained last); still equal: the smaller
+// uuid - an arbitrary but fixed rule (uuids are random or not ordered by
+// time), so the choice never depends on which answer arrived last.
+function duplicateQuality(station) {
+    return Math.min(splitList(station.tags).length, 5)
+            + Math.log(popularity(station) + 1) / Math.LN10;
+}
+
+function betterDuplicate(a, b) {
+    var qa = duplicateQuality(a);
+    var qb = duplicateQuality(b);
+    if (qa !== qb) {
+        return qa > qb ? a : b;
+    }
+    var ta = String(a.lastchangetime || "");
+    var tb = String(b.lastchangetime || "");
+    if (ta !== tb) {
+        return ta > tb ? a : b;
+    }
+    return String(a.stationuuid || "") <= String(b.stationuuid || "") ? a : b;
+}
+
 // Sends all station requests at once, merges the stations of all responses
-// (duplicates dropped, key: url) and calls onDone(merged, failedCount) exactly
+// (duplicates by stream URL merged, see betterDuplicate) and calls
+// onDone(merged, failedCount) exactly
 // once at the end. failedCount is the number of requests that returned no data,
 // so callers can tell "no results" (0 failed) from "no connection" (all failed).
 //
@@ -196,7 +277,8 @@ function fetchAll(urls, userAgent, isStale, onDone) {
             if (Array.isArray(data)) {
                 for (var j = 0; j < data.length; j++) {
                     var s = stationFromApi(data[j]);
-                    merged[s.url || s.stationuuid || s.name] = s;
+                    var key = s.url || s.stationuuid || s.name;
+                    merged[key] = merged[key] ? betterDuplicate(merged[key], s) : s;
                 }
             } else {
                 failed += 1;

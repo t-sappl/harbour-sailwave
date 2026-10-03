@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import QtQuick 2.6
 import Sailfish.Silica 1.0
 
@@ -25,6 +26,7 @@ Rectangle {
                         || page.objectName === "favoritesPage"
                         || page.objectName === "groupNameDialog"
                         || page.objectName === "restorePage"
+                        || page.objectName === "backupPage"
                         || page.objectName === "restoreConfirmDialog"
                         // Sailfish pickers (file picker for restoring)
                         || page.selectedContentProperties !== undefined
@@ -44,8 +46,7 @@ Rectangle {
         NumberAnimation { duration: 200; easing.type: Easing.InOutQuad }
     }
 
-    // Background (TODO C2, comparison on the device): adaptive colour from
-    // the ambience. Hue of the highlight colour, saturation capped (no
+    // Background: adaptive colour from the ambience. Hue of the highlight colour, saturation capped (no
     // garish bar with very saturated accents), fixed lightness (the bar
     // stands out the same way with dark or pale accents), then the contrast
     // to the highlight-coloured icons (heart, moon, arrow) is ensured
@@ -53,14 +54,6 @@ Rectangle {
     // purpose: the bar lies on top of scrolling lists. Re-evaluated
     // automatically when the ambience changes.
     color: adaptiveBarColor(Theme.highlightColor, Theme.colorScheme === Theme.LightOnDark)
-
-    // Variant 2, for the comparison: dimmed accent colour of the ambience
-    // color: Theme.highlightDimmerColor
-
-    // Variant 1 (previous solution), for the comparison: fixed dark/light
-    // tone tinted with 35 % of the highlight colour
-    // color: Qt.tint(Theme.colorScheme === Theme.LightOnDark ? "#121212" : "#F0F0F0",
-    //                Qt.rgba(Theme.highlightColor.r, Theme.highlightColor.g, Theme.highlightColor.b, 0.35))
 
     readonly property real barMaxSaturation: 0.45
     readonly property real barLightnessDark: 0.17
@@ -182,10 +175,13 @@ Rectangle {
     readonly property real sleepRowHeight: Theme.itemSizeSmall
     readonly property var sleepOptions: [5, 10, 15, 30, 45, 60, 90]
 
+    // Height of the collapsed bar (the sleep row only exists while expanded)
+    readonly property real collapsedHeight: Theme.itemSizeLarge
+
     height: {
         var sleep = sleepSelectorOpen ? sleepRowHeight : 0
-        if (!expanded) return sleep + Theme.itemSizeLarge
-        return sleep + Theme.itemSizeLarge + expandedColumn.height
+        if (!expanded) return sleep + collapsedHeight
+        return sleep + collapsedHeight + expandedColumn.height
     }
 
     Behavior on height {
