@@ -1,7 +1,0 @@
-# Internal documentation
-DESIGN-INTERNAL.md
-DECISIONS*.md
-*.pro.user
-*.pro.user.*
-build-*/
-*.zip
