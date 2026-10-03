@@ -1,6 +1,8 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import QtQuick 2.6
 import Sailfish.Silica 1.0
 import "../"
+import "../CountryData.js" as CountryData
 
 // Managing favourites and favourite groups (I1/I2). A pure editing page:
 // tapping a favourite does not play it.
@@ -230,30 +232,18 @@ Page {
                 text: qsTr("Sync now")
                 onClicked: appWindow.favoritesBackup.syncNow(false)
             }
+            // Both open a page (target/format and source are chosen there),
+            // so no "…". Short, without "favorites" (the page title says
+            // that already); "and share" so sharing can be found here
             MenuItem {
                 visible: !page.selecting
-                text: qsTr("Restore favorites …")
+                text: qsTr("Restore")
                 onClicked: pageStack.push(Qt.resolvedUrl("RestorePage.qml"))
             }
             MenuItem {
                 visible: !page.selecting && favModel.count > 0
-                text: qsTr("Back up favorites")
-                onClicked: {
-                    if (appWindow.favoritesBackup.save(true)) {
-                        appWindow.showMessage(qsTr("Favorites saved in Documents/Sailwave"))
-                    } else {
-                        appWindow.showMessage(qsTr("Favorites could not be saved"))
-                    }
-                }
-            }
-            MenuItem {
-                visible: !page.selecting && favModel.count > 0
-                text: qsTr("Export as M3U playlist")
-                onClicked: {
-                    appWindow.showMessage(appWindow.favoritesBackup.exportM3u().length > 0
-                                          ? qsTr("Playlist saved in Documents/Sailwave")
-                                          : qsTr("Playlist could not be saved"))
-                }
+                text: qsTr("Back up and share")
+                onClicked: pageStack.push(Qt.resolvedUrl("BackupPage.qml"))
             }
             MenuItem {
                 visible: !page.selecting
@@ -382,7 +372,7 @@ Page {
                         width: parent.width
                         text: item.health === "broken" ? qsTr("Not reachable at the moment")
                             : item.health === "missing" ? qsTr("No longer listed at radio-browser.info")
-                            : (model.country || "") + (model.codec ? " · " + model.codec : "")
+                            : CountryData.displayName(model.countrycode, model.country) + (model.codec ? " · " + model.codec : "")
                               + (model.bitrate ? " · " + model.bitrate + " kbps" : "")
                         color: item.health.length > 0 ? Theme.highlightColor : Theme.secondaryColor
                         font.pixelSize: Theme.fontSizeExtraSmall

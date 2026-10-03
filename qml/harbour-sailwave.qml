@@ -1,9 +1,11 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import QtQuick 2.6
 import QtMultimedia 5.6
 import Sailfish.Silica 1.0
 import "pages"
 import "cover"
 import "RadioApi.js" as RadioApi
+import "TrackText.js" as TrackText
 
 ApplicationWindow {
     id: appWindow
@@ -21,9 +23,10 @@ ApplicationWindow {
     // PlayerBar, the app cover and the lock screen (MPRIS) show.
     property string currentItunesArtist: ""
     property string currentItunesTitle: ""
+    // Always one line (the stream text may contain a line break, see TrackText.clean)
     readonly property string currentTrackDisplay: currentItunesArtist.length > 0 && currentItunesTitle.length > 0
                                                   ? currentItunesArtist + " - " + currentItunesTitle
-                                                  : currentTrackTitle
+                                                  : TrackText.oneLine(currentTrackTitle)
     onCurrentTrackTitleChanged: {
         currentItunesArtist = ""
         currentItunesTitle = ""
@@ -47,20 +50,29 @@ ApplicationWindow {
     // Without this, every recycled list row would try the same broken link
     // over the network again - wasted loading time and choppy scrolling.
     property var brokenIconUrls: ({})
+    // Raised whenever a URL is marked broken. Changing a key inside the
+    // object above sends no change signal, so bindings that call
+    // isIconUrlBroken() (StationIcon) would never notice - a logo that had
+    // just failed kept its letter avatar in the lists, while places created
+    // later (PlayerBar, lock screen) already showed the Google fallback.
+    // Reading this counter in isIconUrlBroken() makes every such binding
+    // re-evaluate.
+    property int brokenIconRevision: 0
 
     function isIconUrlBroken(url) {
-        return url.length > 0 && brokenIconUrls[url] === true
+        return brokenIconRevision >= 0 && url.length > 0 && brokenIconUrls[url] === true
     }
 
     function markIconUrlBroken(url) {
-        if (url.length > 0) {
+        if (url.length > 0 && brokenIconUrls[url] !== true) {
             brokenIconUrls[url] = true
+            brokenIconRevision++
         }
     }
 
     // App version number (for "About Sailwave" and the User-Agent).
     // Bump it with every release, together with the version in the .spec/.yaml.
-    readonly property string appVersion: "0.1"
+    readonly property string appVersion: "1.0"
 
     // radio-browser.info API etiquette: our own User-Agent instead of the Qt default
     property string apiUserAgent: "harbour-sailwave/" + appVersion
@@ -82,7 +94,9 @@ ApplicationWindow {
     // instead of a Component ("sub-optimal"). The ring needs the fixed
     // instance, so the start page is pushed in Component.onCompleted instead.
     cover: CoverPage {}
-    allowedOrientations: defaultAllowedOrientations
+    // Portrait only in 1.0 (landscape is planned for 1.1, all pages would
+    // need to be checked and adapted)
+    allowedOrientations: Orientation.Portrait
 
     FavoritesStore {
         id: favoritesStore
@@ -225,6 +239,19 @@ ApplicationWindow {
     // Height of the global PlayerBar, for the bottom margin of page content.
     // 0 while no station is selected (the bar then shows no content anyway).
     readonly property real playerBarHeight: currentStation ? playerBar.height : 0
+
+    // Lists and flickables end above the *collapsed* PlayerBar (their view is
+    // shortened by playerBarBaseHeight via anchors.bottomMargin). Then
+    // Silica's own logic keeps an opened context menu inside the visible
+    // area, like in the Mail app - an earlier helper that scrolled the list
+    // while the menu opened fought Silica's scrolling and could trigger a
+    // menu entry under the finger. The collapsed height is used on purpose:
+    // otherwise the list would shrink whenever the bar is expanded.
+    readonly property real playerBarBaseHeight: currentStation ? playerBar.collapsedHeight : 0
+    // The part of the (expanded) bar that lies on top of such a view - the
+    // footers add this much space so the last rows can still be scrolled
+    // above the expanded bar. 0 while the bar is collapsed.
+    readonly property real playerBarOverlap: Math.max(0, playerBarHeight - playerBarBaseHeight)
     MediaPlayer {
         id: player
         autoPlay: false
@@ -251,7 +278,10 @@ ApplicationWindow {
     // of an onMetaDataChanged handler (which this MediaPlayer type does not
     // have), use a declarative binding that re-evaluates automatically
     // whenever player.metaData.title changes.
-    property string rawTrackTitle: player.metaData ? (player.metaData.title || "") : ""
+    // Tidied up right away (TrackText.clean: line breaks are kept, spaces,
+    // tabs and empty lines cleaned). Places with room for one line only use
+    // TrackText.oneLine (currentTrackDisplay, iTunes search, previews).
+    property string rawTrackTitle: TrackText.clean(player.metaData ? (player.metaData.title || "") : "")
 
     onRawTrackTitleChanged: {
         if (rawTrackTitle.length > 0 && rawTrackTitle !== currentTrackTitle) {
@@ -296,6 +326,8 @@ ApplicationWindow {
     }
 
     function playStation(station) {
+        // PlayerBar, app cover, lock screen and histories show this name
+        station.name = RadioApi.cleanName(station.name)
         currentStation = station
         currentTrackTitle = ""
         reconnectAttempts = 0
@@ -637,6 +669,9 @@ ApplicationWindow {
         pageStack.push(ringTopStationsPage, {}, PageStackAction.Immediate)
         ringPageActivated(pageStack.currentPage)
         appSettingsInstance.ensureLoaded()
+        if (!appSettingsInstance.ringHintShown) {
+            ringHintTimer.start()
+        }
         var last = persistentState.loadLastStation()
         if (last) {
             restoreLastStation(last)
@@ -648,6 +683,7 @@ ApplicationWindow {
     }
 
     function restoreLastStation(station) {
+        station.name = RadioApi.cleanName(station.name)
         currentStation = station
         currentTrackTitle = ""
         player.stop()
@@ -663,10 +699,15 @@ ApplicationWindow {
         z: 100
     }
 
-    // --- One-time hint: the station name in the PlayerBar opens the station
-    // info (the pulley entry for it was removed). Shown 1.5 s after the
-    // PlayerBar first appears; disappears on tap, after 8 s, or when the
-    // station info is opened - and never comes back.
+    // --- One-time hints above the PlayerBar, one after the other:
+    // 1. the station name opens the station info (the pulley entry for it
+    //    was removed), 2. the arrow expands the bar (recent tracks, sleep
+    //    timer - the moon only exists in the expanded bar).
+    // Each appears 1.5 s after the PlayerBar is there (the second one 1.5 s
+    // after the first is gone), disappears on tap or after 8 s - and never
+    // comes back. The first also goes when the station info is opened, the
+    // second when the bar is expanded (also if that happens before it was
+    // ever shown).
     InteractionHintLabel {
         id: playerBarHint
         anchors.bottom: playerBar.top
@@ -686,18 +727,62 @@ ApplicationWindow {
         function dismiss() {
             if (shown) {
                 shown = false
+                playerBarHintHideTimer.stop()
                 appSettingsInstance.playerBarHintShown = true
+                // Next one in the chain
+                if (!appSettingsInstance.playerBarExpandHintShown) {
+                    playerBarHintTimer.restart()
+                }
             }
         }
     }
+
+    InteractionHintLabel {
+        id: playerBarExpandHint
+        anchors.bottom: playerBar.top
+        width: parent.width
+        z: 101
+        text: qsTr("Tap the arrow for recent tracks and the sleep timer")
+        property bool shown: false
+        opacity: shown && !playerBar.isHiddenPage ? 1.0 : 0.0
+        visible: opacity > 0
+        Behavior on opacity { FadeAnimation { duration: 400 } }
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: playerBarExpandHint.dismiss()
+        }
+
+        function dismiss() {
+            if (shown) {
+                shown = false
+                playerBarExpandHintHideTimer.stop()
+            }
+            appSettingsInstance.playerBarExpandHintShown = true
+        }
+    }
+
+    readonly property bool playerBarHintsPending: !appSettingsInstance.playerBarHintShown
+                                                  || !appSettingsInstance.playerBarExpandHintShown
 
     Timer {
         id: playerBarHintTimer
         interval: 1500
         onTriggered: {
-            if (!appSettingsInstance.playerBarHintShown && appWindow.currentStation && !playerBar.isHiddenPage) {
+            // Never two hints at the same time: wait for the swipe hint
+            if (ringHint.active) {
+                restart()
+                return
+            }
+            if (!appWindow.currentStation || playerBar.isHiddenPage) {
+                return
+            }
+            if (!appSettingsInstance.playerBarHintShown) {
                 playerBarHint.shown = true
                 playerBarHintHideTimer.start()
+            } else if (!appSettingsInstance.playerBarExpandHintShown && !playerBar.expanded) {
+                playerBarExpandHint.shown = true
+                playerBarExpandHintHideTimer.start()
             }
         }
     }
@@ -708,13 +793,59 @@ ApplicationWindow {
         onTriggered: playerBarHint.dismiss()
     }
 
+    Timer {
+        id: playerBarExpandHintHideTimer
+        interval: 8000
+        onTriggered: playerBarExpandHint.dismiss()
+    }
+
     Connections {
         target: appWindow
         onCurrentStationChanged: {
-            if (!appSettingsInstance.playerBarHintShown && appWindow.currentStation && !playerBarHint.shown) {
+            if (appWindow.playerBarHintsPending && appWindow.currentStation
+                    && !playerBarHint.shown && !playerBarExpandHint.shown) {
                 playerBarHintTimer.restart()
             }
         }
+    }
+
+    Connections {
+        target: playerBar
+        onExpandedChanged: {
+            if (playerBar.expanded) {
+                playerBarExpandHint.dismiss()
+            }
+        }
+    }
+
+    // --- One-time hint on the first start: swiping between the ring pages.
+    // Starts 1 s after the start, only on the start page; ends after its
+    // last run or on any page change - and never comes back.
+    RingHint {
+        id: ringHint
+        anchors.fill: parent
+        bottomMargin: appWindow.playerBarHeight
+        z: 101
+        onFinished: appSettingsInstance.ringHintShown = true
+    }
+
+    Timer {
+        id: ringHintTimer
+        interval: 1000
+        onTriggered: {
+            if (appSettingsInstance.ringHintShown) return
+            if (pageStack.currentPage === ringTopStationsPage) {
+                ringHint.start()
+            } else if (pageStack.currentPage && pageStack.currentPage.ringMember) {
+                // Already swiped by themselves - no hint needed
+                appSettingsInstance.ringHintShown = true
+            }
+        }
+    }
+
+    Connections {
+        target: pageStack
+        onCurrentPageChanged: ringHint.stop()
     }
 
     MessageBanner {

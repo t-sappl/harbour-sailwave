@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import QtQuick 2.6
 import Sailfish.Silica 1.0
 import "TrackText.js" as TrackText
@@ -50,7 +51,8 @@ Column {
                 Label {
                     width: parent.width
                     truncationMode: TruncationMode.Fade
-                    text: parent.parent.parts.title
+                    // One line here (fixed row height), see TrackText.clean
+                    text: TrackText.oneLine(parent.parent.parts.title)
                     color: Theme.primaryColor
                     font.pixelSize: Theme.fontSizeSmall
                 }

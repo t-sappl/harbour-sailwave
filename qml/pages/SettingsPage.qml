@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import QtQuick 2.6
 import Sailfish.Silica 1.0
 import "../"
@@ -5,6 +6,14 @@ import "../CountryData.js" as CountryData
 
 Page {
     id: settingsPage
+
+    // The password field shows the stored password: read it now if that has
+    // not happened yet (only when the WebDAV fields are visible)
+    Component.onCompleted: {
+        if (appWindow.appSettings.webdavUse) {
+            appWindow.appSettings.ensurePasswordLoaded()
+        }
+    }
 
     // WebDAV connection test (favourites sync)
     property bool webdavTesting: false
@@ -61,7 +70,8 @@ Page {
                        : (appWindow.userCountry.length > 0
                           ? qsTr("Automatic (%1)").arg(settingsPage.countryName(appWindow.userCountry))
                           : qsTr("Automatic"))
-                description: qsTr("Used for top stations and recommendations.")
+                description: qsTr("Used for top stations and recommendations. "
+                                  + "When set to automatic, the country is detected from the IP address via ipapi.co.")
                 onClicked: pageStack.push(Qt.resolvedUrl("CountryPickerPage.qml"))
             }
 
@@ -78,24 +88,32 @@ Page {
             // ---------------------------------------------------------
             // Favourites backup and WebDAV sync (I3, I4). The fields only
             // appear when WebDAV is chosen.
-            SectionHeader { text: qsTr("Favorites") }
+            SectionHeader { text: qsTr("Backup and sync") }
 
-            ComboBox {
-                id: storageCombo
-                width: parent.width
-                label: qsTr("Save favorites")
-                description: qsTr("Always also in Documents/Sailwave, with the last 5 states as automatic backups.")
-                currentIndex: appWindow.appSettings.favoritesStorage === "webdav" ? 1 : 0
-                menu: ContextMenu {
-                    MenuItem { text: qsTr("Only on this device") }
-                    MenuItem { text: qsTr("Device and WebDAV (e.g. Nextcloud)") }
-                }
-                onCurrentIndexChanged: appWindow.appSettings.favoritesStorage = currentIndex === 1 ? "webdav" : "local"
+            Label {
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                wrapMode: Text.Wrap
+                color: Theme.secondaryHighlightColor
+                font.pixelSize: Theme.fontSizeExtraSmall
+                text: qsTr("Favorites are always backed up on this device (Documents/Sailwave, last 5 states).")
+            }
+
+            Item { width: 1; height: Theme.paddingMedium }
+
+            // A server for manual backups/restoring; automatic sync is a
+            // separate switch below. Switching off keeps the access data.
+            TextSwitch {
+                text: qsTr("WebDAV server (e.g. Nextcloud)")
+                description: qsTr("For backups on your own server and, if wanted, automatic sync between devices.")
+                checked: appWindow.appSettings.webdavUse
+                automaticCheck: false
+                onClicked: appWindow.appSettings.webdavUse = !appWindow.appSettings.webdavUse
             }
 
             Column {
                 width: parent.width
-                visible: appWindow.appSettings.favoritesStorage === "webdav"
+                visible: appWindow.appSettings.webdavUse
 
                 TextField {
                     width: parent.width
@@ -147,12 +165,26 @@ Page {
                     text: appWindow.appSettings.webdavPassword
                     EnterKey.iconSource: "image://theme/icon-m-enter-close"
                     EnterKey.onClicked: focus = false
+                    // Stored in Sailfish Secrets (see AppSettings.setWebdavPassword).
+                    // The binding also fills the field when the password
+                    // arrives from Secrets after the page was opened.
                     onTextChanged: {
                         if (text !== appWindow.appSettings.webdavPassword) {
-                            appWindow.appSettings.webdavPassword = text
+                            appWindow.appSettings.setWebdavPassword(text)
                             settingsPage.webdavStatus = ""
                         }
                     }
+                }
+                Label {
+                    x: Theme.horizontalPageMargin
+                    width: parent.width - 2 * Theme.horizontalPageMargin
+                    visible: appWindow.appSettings.webdavPasswordError
+                    wrapMode: Text.Wrap
+                    color: Theme.highlightColor
+                    font.pixelSize: Theme.fontSizeExtraSmall
+                    text: appWindow.appSettings.webdavPassword.length > 0
+                          ? qsTr("The password could not be saved securely and will be lost when the app is closed.")
+                          : qsTr("The saved password could not be read. Please enter it again.")
                 }
                 Label {
                     x: Theme.horizontalPageMargin
@@ -162,6 +194,15 @@ Page {
                     font.pixelSize: Theme.fontSizeExtraSmall
                     text: qsTr("Recommended: a separate app password from the security settings of "
                                + "Nextcloud instead of the login password.")
+                }
+
+                TextSwitch {
+                    text: qsTr("Sync automatically")
+                    description: qsTr("Uploads every change and checks for changes from other devices at start-up. "
+                                      + "When off, the server is only used when backing up or restoring manually.")
+                    checked: appWindow.appSettings.webdavAutoSync
+                    automaticCheck: false
+                    onClicked: appWindow.appSettings.webdavAutoSync = !appWindow.appSettings.webdavAutoSync
                 }
 
                 Item { width: parent.width; height: Theme.paddingLarge }
@@ -180,6 +221,7 @@ Page {
                                 : status === 0 ? qsTr("Server not reachable")
                                 : qsTr("Connection failed – check the URL")
                             // First successful connection: sync right away
+                            // (only with automatic sync; syncNow checks that)
                             if (ok) appWindow.favoritesBackup.syncNow(true)
                         })
                     }
@@ -207,6 +249,16 @@ Page {
                 checked: appWindow.appSettings.trackArtEnabled
                 automaticCheck: false
                 onClicked: appWindow.appSettings.trackArtEnabled = !appWindow.appSettings.trackArtEnabled
+            }
+
+            TextSwitch {
+                text: qsTr("Load missing logos via Google")
+                description: qsTr("If a station has no usable logo, the domain of its homepage is sent to "
+                                  + "Google's favicon service to get the website's icon. "
+                                  + "When off, a letter is shown instead.")
+                checked: appWindow.appSettings.googleLogoFallback
+                automaticCheck: false
+                onClicked: appWindow.appSettings.googleLogoFallback = !appWindow.appSettings.googleLogoFallback
             }
 
             TextSwitch {

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 TARGET = harbour-sailwave
 
 CONFIG += sailfishapp sailfishapp_i18n
@@ -8,14 +9,24 @@ TRANSLATIONS += \
 
 QT += network multimedia
 
+# Sailfish Secrets for the WebDAV password (see src/secretstore.h).
+# No own "CONFIG += link_pkgconfig": qmake loads CONFIG features in reverse
+# order, so it would be processed before sailfishapp.prf adds its own
+# PKGCONFIG entry - and -lsailfishapp would be missing when linking.
+# sailfishapp.prf enables link_pkgconfig itself.
+PKGCONFIG += sailfishsecrets
+INCLUDEPATH += /usr/include/Sailfish
+
 SOURCES += src/harbour-sailwave.cpp \
     src/artcomposer.cpp \
+    src/secretstore.cpp \
     src/webdavclient.cpp
 
 HEADERS += \
     src/artcomposer.h \
     src/filehelper.h \
     src/networkaccess.h \
+    src/secretstore.h \
     src/webdavclient.h
 
 # Listed only so that Qt Creator shows them in the project tree.
@@ -32,6 +43,7 @@ OTHER_FILES += rpm/harbour-sailwave.spec \
     qml/MprisIntegration.qml \
     qml/PersistentState.qml \
     qml/PlayerBar.qml \
+    qml/RingHint.qml \
     qml/MessageBanner.qml \
     qml/SleepBadge.qml \
     qml/SleepTimer.qml \
@@ -47,6 +59,7 @@ OTHER_FILES += rpm/harbour-sailwave.spec \
     qml/pages/AboutPage.qml \
     qml/pages/AdvancedSearchFilter.qml \
     qml/pages/AdvancedSearchPage.qml \
+    qml/pages/BackupPage.qml \
     qml/pages/CountryPickerPage.qml \
     qml/pages/FavoritesPage.qml \
     qml/pages/GroupNameDialog.qml \

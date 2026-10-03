@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import QtQuick 2.6
 import QtQuick.LocalStorage 2.0
 import Sailfish.Silica 1.0
@@ -88,12 +89,23 @@ Item {
     }
 
     Component.onCompleted: {
-        initDb()
+        db()   // creates/migrates the tables if no one did so yet
         reload()
     }
 
+    // The tables are created on the first access, not only in
+    // Component.onCompleted: the order of onCompleted handlers is not
+    // defined, and on a fresh install a page could query a table before it
+    // existed ("no such table: station_history", seen in the emulator).
+    property bool tablesReady: false
+
     function db() {
-        return LocalStorage.openDatabaseSync("harbour-sailwave", "1.0", "Sailwave Radio Favorites", 100000)
+        var database = LocalStorage.openDatabaseSync("harbour-sailwave", "1.0", "Sailwave Radio Favorites", 100000)
+        if (!tablesReady) {
+            tablesReady = true   // set first: initDb() itself calls db()
+            initDb()
+        }
+        return database
     }
 
     function initDb() {
@@ -234,7 +246,7 @@ Item {
             for (var i = 0; i < result.rows.length; i++) {
                 var row = result.rows.item(i)
                 list.push({
-                    name: row.name,
+                    name: RadioApi.cleanName(row.name),
                     url: row.url,
                     url_resolved: row.url_resolved,
                     country: row.country,

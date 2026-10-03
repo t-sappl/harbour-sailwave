@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import QtQuick 2.6
 import Sailfish.Silica 1.0
 
@@ -12,6 +13,9 @@ Dialog {
     objectName: "restoreConfirmDialog"
 
     property var backupData
+    // Restoring the WebDAV server file: its ETag, so that automatic sync
+    // does not see the server file as changed elsewhere (no conflict page)
+    property string serverEtag: ""
 
     readonly property bool replaceMode: modeCombo.currentIndex === 0
     readonly property int favoriteCount: backupData ? backupData.favorites.length : 0
@@ -30,6 +34,9 @@ Dialog {
     }
 
     onAccepted: {
+        if (serverEtag.length > 0) {
+            appWindow.appSettings.webdavEtag = serverEtag
+        }
         var replace = replaceMode
         appWindow.favoritesBackup.restore(backupData, function(count) {
             appWindow.showMessage(replace ? qsTr("Favorites restored")
@@ -96,6 +103,15 @@ Dialog {
                       : qsTr("Missing favorites and groups are added. Favorites that already exist keep "
                              + "their group and position. Nothing is deleted. The current state is saved "
                              + "as a backup first.")
+            }
+            Label {
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                visible: dialog.replaceMode && appWindow.favoritesBackup.webdavEnabled
+                wrapMode: Text.Wrap
+                color: Theme.secondaryHighlightColor
+                font.pixelSize: Theme.fontSizeSmall
+                text: qsTr("With automatic sync, the WebDAV server then has this state as well.")
             }
         }
 

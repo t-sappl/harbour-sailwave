@@ -1,6 +1,9 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import QtQuick 2.6
 import Sailfish.Silica 1.0
 import "../"
+import "RadioApi.js" as RadioApi
+import "CountryData.js" as CountryData
 
 ListItem {
     id: delegateItem
@@ -40,7 +43,9 @@ ListItem {
 
         Label {
             width: parent.width
-            text: model.name || ""
+            // Cleaned here too: favourites and history entries stored by
+            // older versions may still contain the raw name
+            text: RadioApi.cleanName(model.name)
             truncationMode: TruncationMode.Fade
             color: delegateItem.highlighted ? Theme.highlightColor : Theme.primaryColor
         }
@@ -48,7 +53,7 @@ ListItem {
             width: parent.width
             text: delegateItem.warningText.length > 0
                   ? delegateItem.warningText
-                  : (model.country || "") + (model.codec ? " · " + model.codec : "") + (model.bitrate ? " · " + model.bitrate + " kbps" : "")
+                  : CountryData.displayName(model.countrycode, model.country) + (model.codec ? " · " + model.codec : "") + (model.bitrate ? " · " + model.bitrate + " kbps" : "")
             font.pixelSize: Theme.fontSizeExtraSmall
             color: delegateItem.warningText.length > 0 ? Theme.highlightColor : Theme.secondaryColor
             truncationMode: TruncationMode.Fade

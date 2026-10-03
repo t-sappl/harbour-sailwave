@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 .pragma library
 
 // List of radio-browser.info API servers with automatic failover.

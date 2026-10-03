@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import QtQuick 2.6
 import Sailfish.Silica 1.0
 import "../"
@@ -8,9 +9,12 @@ Page {
 
     // --- Fill in before publishing. Empty entries are
     // not shown.
-    property string licenseName: ""          // e.g. "GPLv3"
-    property string sourceCodeUrl: ""        // e.g. "https://github.com/.../harbour-sailwave"
-    property string privacyPolicyUrl: ""     // link to the privacy policy
+    property string licenseName: "GPL 3.0 or later"
+    property string sourceCodeUrl: "https://github.com/t-sappl/harbour-sailwave/"
+    property string privacyPolicyUrl: "https://github.com/t-sappl/harbour-sailwave/blob/main/PRIVACY.md"
+    property string issuesUrl: "https://github.com/t-sappl/harbour-sailwave/issues"
+    // Not translated (name)
+    property string copyright: "\u00A9 2026 Thomas Sappl"
 
     SilicaFlickable {
         anchors.fill: parent
@@ -35,6 +39,16 @@ Page {
                 sourceSize.width: width
                 sourceSize.height: height
                 visible: status === Image.Ready
+
+                // Hidden: press and hold shows all one-time hints again
+                // (for testing)
+                MouseArea {
+                    anchors.fill: parent
+                    onPressAndHold: {
+                        appWindow.appSettings.resetHints()
+                        appWindow.showMessage(qsTr("Hints will be shown again"))
+                    }
+                }
             }
 
             Label {
@@ -49,6 +63,14 @@ Page {
                 text: qsTr("Version %1").arg(appWindow.appVersion)
                 font.pixelSize: Theme.fontSizeSmall
                 color: Theme.secondaryHighlightColor
+            }
+
+            Label {
+                anchors.horizontalCenter: parent.horizontalCenter
+                visible: aboutPage.copyright.length > 0
+                text: aboutPage.copyright
+                font.pixelSize: Theme.fontSizeExtraSmall
+                color: Theme.secondaryColor
             }
 
             Label {
@@ -78,9 +100,23 @@ Page {
                 linkColor: Theme.highlightColor
                 textFormat: Text.StyledText
                 text: qsTr("Station data from the community database %1. "
-                + "Album covers and genres from the iTunes Search API.")
+                + "Station logos from the stations' websites, missing ones via Google's favicon service (can be turned off in the settings). "
+                + "Album covers and genres from the iTunes Search API (can be turned off in the settings). "
+                + "Home country detected via ipapi.co or api.country.is (only while set to automatic in the settings).")
                 .arg("<a href=\"https://www.radio-browser.info\">radio-browser.info</a>")
                 onLinkActivated: Qt.openUrlExternally(link)
+            }
+
+            SectionHeader { text: qsTr("Development") }
+
+            Label {
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                wrapMode: Text.Wrap
+                font.pixelSize: Theme.fontSizeExtraSmall
+                color: Theme.secondaryHighlightColor
+                text: qsTr("Developed with the assistance of an AI model (Claude by Anthropic). "
+                + "All changes are reviewed and tested by the developer on a Jolla Phone (2026).")
             }
 
             Item { width: 1; height: Theme.paddingMedium }
@@ -95,6 +131,11 @@ Page {
                     visible: aboutPage.privacyPolicyUrl.length > 0
                     text: qsTr("Privacy policy")
                     onClicked: Qt.openUrlExternally(aboutPage.privacyPolicyUrl)
+                }
+                Button {
+                    visible: aboutPage.issuesUrl.length > 0
+                    text: qsTr("Report a problem")
+                    onClicked: Qt.openUrlExternally(aboutPage.issuesUrl)
                 }
             }
         }

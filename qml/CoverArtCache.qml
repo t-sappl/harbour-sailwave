@@ -1,6 +1,8 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import QtQuick 2.6
 import harbour.sailwave 1.0
 import "StationLogo.js" as StationLogo
+import "TrackText.js" as TrackText
 
 // Provides the cover art for MPRIS (lock screen) as a local PNG file:
 //
@@ -159,7 +161,8 @@ Item {
         }
         var override = (st.stationuuid && appWindow.persistentState)
                 ? appWindow.persistentState.getHomepageOverride(st.stationuuid) : ""
-        var google = StationLogo.googleFaviconUrl(StationLogo.resolveHomepage(st.homepage, override), 128)
+        var google = appWindow.appSettings.googleLogoFallback
+                ? StationLogo.googleFaviconUrl(StationLogo.resolveHomepage(st.homepage, override), 128) : ""
         if (google.length > 0 && !appWindow.isIconUrlBroken(google)) {
             list.push(google)
         }
@@ -191,7 +194,9 @@ Item {
     // Split "Artist - Title"; everything else (jingles, news, slogans
     // without a separator) is not looked up at all.
     function parseTitle(t) {
-        var i = (t || "").indexOf(" - ")
+        // A multi-line stream text is searched as one line
+        t = TrackText.oneLine(t)
+        var i = t.indexOf(" - ")
         if (i <= 0) {
             return null
         }

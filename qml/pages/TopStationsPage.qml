@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import QtQuick 2.6
 import Sailfish.Silica 1.0
 import "../"
@@ -21,6 +22,31 @@ Page {
     property int topLoadId: 0
 
     property bool historyCollapsed: true
+
+    // --- Order frozen while the start page is on screen ---
+    // Playing a station reorders the station history and re-scores the top
+    // stations. While the page is visible (and the app in the foreground)
+    // the order of these sections stays: new stations appear, stations that
+    // became favourites (or were removed) disappear, but nothing moves under
+    // the finger. The new order is applied as soon as the page is off screen
+    // (another page on top, or the app in the background) - same principle
+    // as the track history ("re-sorted on the next opening").
+    readonly property bool orderFrozen: status !== PageStatus.Inactive
+                                        && Qt.application.state === Qt.ApplicationActive
+    property bool historyResortPending: false
+    property bool topResortPending: false
+    onOrderFrozenChanged: {
+        if (orderFrozen) return
+        if (historyResortPending) {
+            historyResortPending = false
+            refreshHistoryModel()
+            rebuildMainList()
+        }
+        if (topResortPending) {
+            topResortPending = false
+            refreshTopStations(false)
+        }
+    }
 
     // Favourite groups (I1): collapsed state per group id (0 = favourites
     // without a group), stored like the other sections ("favGroup_<id>").
@@ -77,6 +103,8 @@ Page {
     SilicaListView {
         id: listView
         anchors.fill: parent
+        // Ends above the collapsed PlayerBar (see appWindow.playerBarBaseHeight)
+        anchors.bottomMargin: appWindow.playerBarBaseHeight
         cacheBuffer: 800
         currentIndex: -1
 
@@ -174,6 +202,26 @@ Page {
                     color: doneItem.highlighted ? Theme.highlightColor : Theme.primaryColor
                 }
             }
+
+            // No favourites yet: a short hint where they will appear and how
+            // to add one (only once the lists have content, not while loading)
+            Column {
+                width: parent.width
+                visible: !page.searchMode && rawFavorites.count === 0 && mainListModel.count > 0
+
+                SectionHeader { text: qsTr("Favorites") }
+
+                Label {
+                    x: Theme.horizontalPageMargin
+                    width: parent.width - 2 * Theme.horizontalPageMargin
+                    wrapMode: Text.Wrap
+                    font.pixelSize: Theme.fontSizeSmall
+                    color: Theme.secondaryHighlightColor
+                    text: qsTr("Tap the heart next to a station to add it to your favorites.")
+                }
+
+                Item { width: 1; height: Theme.paddingLarge }
+            }
         }
 
         model: mainListModel
@@ -195,12 +243,11 @@ Page {
             NumberAnimation { property: "y"; duration: 200; easing.type: Easing.InOutQuad }
         }
 
-        // The space for the PlayerBar is part of the footer instead of the
-        // list's bottomMargin: with Qt 5.6, a ListView ignores bottomMargin
-        // while its content is shorter than the view, so the last rows could
-        // end up hidden behind the PlayerBar without the list being
-        // scrollable (e.g. start page with station history expanded and
-        // top stations collapsed). The footer always counts as content.
+        // The view ends above the collapsed PlayerBar; the footer only adds
+        // the part of the expanded bar that lies on top of the list. That
+        // space is part of the footer instead of the list's bottomMargin:
+        // with Qt 5.6, a ListView ignores bottomMargin while its content is
+        // shorter than the view. The footer always counts as content.
         //
         // Error and empty states below the list: favourites and history stay
         // usable above it, even without a connection
@@ -243,7 +290,7 @@ Page {
 
             Item {
                 width: parent.width
-                height: appWindow.playerBarHeight
+                height: appWindow.playerBarOverlap
             }
         }
 
@@ -432,8 +479,8 @@ Page {
                             page.dragViewY = mapToItem(listView, mouse.x, mouse.y).y
                         }
                         onPositionChanged: page.moveDraggedTo(mapToItem(listView, mouse.x, mouse.y).y)
-                        onReleased: page.finishDrag()
-                        onCanceled: page.finishDrag()
+                        onReleased: page.finishDrag(rowItem.mapToItem(listView, 0, 0).y)
+                        onCanceled: page.finishDrag(rowItem.mapToItem(listView, 0, 0).y)
                     }
                 }
             }
@@ -466,6 +513,13 @@ Page {
     // collapse states.
     property bool sortMode: false
     onSortModeChanged: {
+        // First "Move": once, show where the other favourite options are
+        if (sortMode && !appWindow.appSettings.moveHintShown) {
+            moveHint.shown = true
+            moveHintHideTimer.restart()
+        } else if (!sortMode) {
+            moveHint.dismiss()
+        }
         // A drag may have been cut off by the rebuild: never leave the list
         // locked (it could no longer be scrolled after "Done")
         dragIndex = -1
@@ -473,13 +527,50 @@ Page {
         // Keep the view steady: the row at the top of the screen stays where
         // it is (the header shrinks/grows by "Done" and groups collapse or
         // expand, which would otherwise make the list jump)
-        var anchor = captureAnchor()
+        var anchor = sortMode ? captureAnchor() : leaveAnchor()
+        if (sortMode) {
+            lastMovedUrl = ""
+        }
         rebuildMainList()
         pendingAnchor = anchor
         restoreAnchorTimer.restart()
     }
 
     property var pendingAnchor: null
+
+    // The favourite moved last (see finishDrag)
+    property string lastMovedUrl: ""
+    property real lastMovedViewY: -1
+    property real lastMovedContentY: 0
+
+    // Leaving the sort mode: if the favourite moved last is on screen, it
+    // is the anchor - the view stays where it was dropped (e.g. at the
+    // bottom after dragging it down), and its group stays expanded so it
+    // does not disappear. Otherwise the topmost visible row (captureAnchor).
+    function leaveAnchor() {
+        if (lastMovedUrl.length > 0) {
+            for (var i = 0; i < mainListModel.count; i++) {
+                var row = mainListModel.get(i)
+                if (!row.isHeader && row.sectionType === "favorites" && row.url === lastMovedUrl) {
+                    // Position on screen where it was dropped (see finishDrag)
+                    // (corrected if the list was scrolled since then)
+                    var y = lastMovedViewY - (listView.contentY - lastMovedContentY)
+                    if (y >= 0 && y < listView.height - appWindow.playerBarOverlap) {
+                        var gid = row.groupId || 0
+                        if (isFavGroupCollapsed(gid)) {
+                            favGroupCollapsed[gid] = false
+                            favGroupVersion++
+                            appWindow.persistentState.setCollapseState("favGroup_" + gid, false)
+                        }
+                        return { top: false, key: rowKey(row), groupKey: "h:favorites:" + gid, offset: y }
+                    }
+                    break
+                }
+            }
+        }
+        return captureAnchor()
+    }
+
 
     // Row at the top of the visible area: { top: true } if the page header
     // is visible, else { key, groupKey, offset } (offset = distance of the
@@ -496,8 +587,37 @@ Page {
             top: false,
             key: rowKey(row),
             groupKey: row.sectionType === "favorites" ? "h:favorites:" + (row.groupId || 0) : "",
-            offset: item ? item.y - listView.contentY : 0
+            offset: item ? item.y - listView.contentY : 0,
+            item: item
         }
+    }
+
+    // The row of the playing station, if it is on screen - after tapping a
+    // station it is the anchor: it stays exactly where it was, and a new
+    // entry in the station history extends the list upwards (the rows above
+    // move up) instead of pushing the tapped row down
+    function currentStationAnchor() {
+        var station = appWindow.currentStation
+        if (!station || !station.url) {
+            return null
+        }
+        for (var y = 1; y < listView.height; y += Theme.paddingLarge) {
+            var cy = listView.contentY + y
+            var index = listView.indexAt(Theme.horizontalPageMargin, cy)
+            if (index < 0) {
+                continue
+            }
+            var row = mainListModel.get(index)
+            if (!row.isHeader && row.url === station.url) {
+                var item = listView.itemAt(Theme.horizontalPageMargin, cy)
+                if (!item) {
+                    return null
+                }
+                return { top: false, key: rowKey(row), groupKey: "",
+                         offset: item.y - listView.contentY, item: item }
+            }
+        }
+        return null
     }
 
     function rowKey(row) {
@@ -515,6 +635,24 @@ Page {
                 listView.positionViewAtBeginning()
                 listView.contentY = listView.originY
                 return
+            }
+            // The row's delegate still exists (rows are synced, not rebuilt):
+            // put it back exactly where it was on screen
+            if (anchor.item) {
+                var itemY = 0
+                var alive = false
+                try {
+                    alive = anchor.item.parent !== null && anchor.item.parent !== undefined
+                    itemY = anchor.item.y
+                } catch (e) {
+                    alive = false
+                }
+                if (alive) {
+                    listView.forceLayout()
+                    itemY = anchor.item.y
+                    listView.contentY = Math.max(listView.originY, itemY - anchor.offset)
+                    return
+                }
             }
             // The same row, or (collapsed again) its group header
             var index = -1
@@ -607,7 +745,7 @@ Page {
     // near the top edge or just above the PlayerBar - so a favourite can be
     // moved from the very bottom to the very top (as on the favourites page)
     readonly property real autoScrollZone: Theme.itemSizeMedium
-    readonly property real dragAreaBottom: listView.height - appWindow.playerBarHeight
+    readonly property real dragAreaBottom: listView.height - appWindow.playerBarOverlap
 
     Timer {
         id: dragAutoScroll
@@ -641,11 +779,15 @@ Page {
         return { first: firstHeader + 1, last: last }
     }
 
-    function finishDrag() {
+    // viewY: where the dragged row ended up on screen (from its delegate)
+    function finishDrag(viewY) {
         listView.interactive = true
         if (dragIndex < 0) {
             return
         }
+        lastMovedUrl = mainListModel.get(dragIndex).url || ""
+        lastMovedViewY = viewY !== undefined ? viewY : -1
+        lastMovedContentY = listView.contentY
         dragIndex = -1
         // Group of each favourite = the header above it
         var entries = []
@@ -690,6 +832,9 @@ Page {
     Connections {
         target: appWindow.favoritesStore
         onFavoritesChanged: {
+            // The station history includes favourites; refreshed anyway so
+            // its rows show the new heart state with the rest of the list
+            refreshHistoryModel()
             refreshFavoritesModel()
             page.scheduleTopRefresh()
         }
@@ -721,7 +866,15 @@ Page {
     Timer {
         id: topRefreshTimer
         interval: 500
-        onTriggered: page.refreshTopStations(false)
+        onTriggered: {
+            // Frozen order (see orderFrozen): re-score later. The first fill
+            // is never deferred.
+            if (page.orderFrozen && rawTopStations.count > 0 && !page.searchMode) {
+                page.topResortPending = true
+                return
+            }
+            page.refreshTopStations(false)
+        }
     }
 
     function scheduleTopRefresh() {
@@ -755,17 +908,51 @@ Page {
     }
 
     function refreshHistoryModel() {
-        rawHistory.clear()
         var history = appWindow.persistentState.getStationHistory(50)
-        var shown = 0
+        var fresh = []
         var seenUrls = {}
 
-        for (var i = 0; i < history.length && shown < 5; i++) {
+        for (var i = 0; i < history.length && fresh.length < 5; i++) {
             var item = history[i]
-            if (item.url && !seenUrls[item.url] && !appWindow.favoritesStore.isFavorite(item.url)) {
+            // Favourites are included: the history shows what was played
+            // last, whether it is a favourite or not (wish Thomas, v79)
+            if (item.url && !seenUrls[item.url]) {
                 seenUrls[item.url] = true
-                rawHistory.append(item)
-                shown++
+                fresh.push(item)
+            }
+        }
+
+        if (!orderFrozen || rawHistory.count === 0) {
+            rawHistory.clear()
+            for (var a = 0; a < fresh.length; a++) {
+                rawHistory.append(fresh[a])
+            }
+            historyResortPending = false
+            return
+        }
+
+        // Frozen (see orderFrozen): drop what is no longer there, keep the
+        // order of the rest, new stations at the top of the section
+        for (var r = rawHistory.count - 1; r >= 0; r--) {
+            if (!seenUrls[rawHistory.get(r).url]) {
+                rawHistory.remove(r)
+            }
+        }
+        var present = {}
+        for (var p = 0; p < rawHistory.count; p++) {
+            present[rawHistory.get(p).url] = true
+        }
+        var inserted = 0
+        for (var n = 0; n < fresh.length; n++) {
+            if (!present[fresh[n].url]) {
+                rawHistory.insert(inserted, fresh[n])
+                inserted++
+            }
+        }
+        for (var o = 0; o < rawHistory.count; o++) {
+            if (rawHistory.get(o).url !== fresh[o].url) {
+                historyResortPending = true
+                break
             }
         }
     }
@@ -776,7 +963,7 @@ Page {
     }
 
     function helperStationObject(src, isHistory, sectionType) {
-        return {
+        var row = {
             sectionType: sectionType || "",
             name: src.name || "",
             country: src.country || "",
@@ -795,6 +982,10 @@ Page {
             isHistory: isHistory || false,
             groupId: Number(src.groupId) || 0
         }
+        // Rows inserted directly (expanding a section, loading more) get the
+        // same id as in buildRows (see addRow)
+        row.rowId = rowKey(row) + "#1"
+        return row
     }
 
     function removeHistoryItem(stationUrl) {
@@ -805,18 +996,136 @@ Page {
         }
     }
 
+    // Rebuilds the rows from the raw models. Except when switching into or
+    // out of the search, the list model is NOT cleared: the new rows are
+    // compared with the shown ones (rowId) and only differences are applied
+    // (syncRows) - rows stay, logos are not reloaded, and the row at the
+    // top of the screen stays in place (anchor). clear() made the page jump
+    // twice when a station was played (history + top re-scoring).
+    property bool lastBuildWasSearch: false
+
     function rebuildMainList() {
-        mainListModel.clear()
+        var rows = []
+        if (searchMode || lastBuildWasSearch) {
+            buildRows(rows)
+            lastBuildWasSearch = searchMode
+            mainListModel.clear()
+            for (var c = 0; c < rows.length; c++) {
+                mainListModel.append(rows[c])
+            }
+            return
+        }
+
+        pruneTopStations()
+        buildRows(rows)
+
+        // Keep the topmost visible row in place (not while the list is being
+        // dragged/flicked, and not if another anchor is already pending, e.g.
+        // from the sort mode)
+        var keep = !listView.moving && page.pendingAnchor === null && mainListModel.count > 0
+        var anchor = keep ? (currentStationAnchor() || captureAnchor()) : null
+        var changed = syncRows(rows)
+        if (changed && anchor && !anchor.top) {
+            page.pendingAnchor = anchor
+            restoreAnchorTimer.restart()
+        }
+    }
+
+    // Top stations never show a favourite. A station of the shown station
+    // history is removed only while the order is not frozen: a top station
+    // that was just played stays where it is (wish Thomas) and moves to the
+    // station history only once the page is off screen (see orderFrozen).
+    function pruneTopStations() {
+        var hist = {}
+        if (!orderFrozen) {
+            for (var h = 0; h < rawHistory.count; h++) {
+                hist[rawHistory.get(h).url] = true
+            }
+        }
+        for (var t = rawTopStations.count - 1; t >= 0; t--) {
+            var url = rawTopStations.get(t).url
+            if (hist[url] || appWindow.favoritesStore.isFavorite(url)) {
+                rawTopStations.remove(t)
+            }
+        }
+    }
+
+    // Applies the differences between the shown rows and rows (rowId):
+    // removes rows that are gone, moves/inserts the others into place and
+    // updates changed values in place (set() keeps the delegate). Returns
+    // whether rows were removed, moved or inserted.
+    function syncRows(rows) {
+        var changed = false
+        var wanted = {}
+        for (var w = 0; w < rows.length; w++) {
+            wanted[rows[w].rowId] = true
+        }
+        for (var r = mainListModel.count - 1; r >= 0; r--) {
+            if (!wanted[mainListModel.get(r).rowId]) {
+                mainListModel.remove(r)
+                changed = true
+            }
+        }
+        for (var i = 0; i < rows.length; i++) {
+            var id = rows[i].rowId
+            if (i < mainListModel.count && mainListModel.get(i).rowId === id) {
+                updateRow(i, rows[i])
+                continue
+            }
+            var from = -1
+            for (var k = i + 1; k < mainListModel.count; k++) {
+                if (mainListModel.get(k).rowId === id) {
+                    from = k
+                    break
+                }
+            }
+            if (from >= 0) {
+                mainListModel.move(from, i, 1)
+                updateRow(i, rows[i])
+            } else {
+                mainListModel.insert(i, rows[i])
+            }
+            changed = true
+        }
+        if (mainListModel.count > rows.length) {
+            mainListModel.remove(rows.length, mainListModel.count - rows.length)
+            changed = true
+        }
+        return changed
+    }
+
+    function updateRow(index, row) {
+        var current = mainListModel.get(index)
+        for (var key in row) {
+            if (current[key] !== row[key]) {
+                mainListModel.set(index, row)
+                return
+            }
+        }
+    }
+
+    // Unique id per row: rowKey plus a counter for the (rare) case that the
+    // same station URL appears twice in one section
+    function addRow(rows, seen, row) {
+        var key = rowKey(row)
+        seen[key] = (seen[key] || 0) + 1
+        row.rowId = key + "#" + seen[key]
+        rows.push(row)
+    }
+
+    // The rows of the list in display order (see rebuildMainList)
+    function buildRows(rows) {
+        var seen = {}
 
         if (searchMode) {
-            mainListModel.append({
+            addRow(rows, seen, {
                 isHeader: true,
                 headerTitle: qsTr("Search results"),
                 collapsible: false,
                 sectionType: "search"
             })
             for (var s = 0; s < rawSearch.count; s++) {
-                mainListModel.append(helperStationObject(rawSearch.get(s), false, "search"))
+                addRow(rows, seen, helperStationObject(rawSearch.get(s), false, "search"))
             }
             return
         }
@@ -837,19 +1146,21 @@ Page {
                 sections.push({ id: 0, title: qsTr("Other favorites"), collapsible: true })
             }
             for (var sec = 0; sec < sections.length; sec++) {
-                var rows = []
+                // Not "rows" - that is the parameter (a var with the same
+                // name would replace it: endless loop at start-up in v55)
+                var groupFavs = []
                 for (var f = 0; f < rawFavorites.count; f++) {
                     var fav = rawFavorites.get(f)
                     if ((Number(fav.groupId) || 0) === sections[sec].id) {
-                        rows.push(fav)
+                        groupFavs.push(fav)
                     }
                 }
                 // Empty groups (and an empty "Other favorites") only while
                 // sorting, as drop targets
-                if (rows.length === 0 && !(sortMode && groups.length > 0)) {
+                if (groupFavs.length === 0 && !(sortMode && groups.length > 0)) {
                     continue
                 }
-                mainListModel.append({
+                addRow(rows, seen, {
                     isHeader: true,
                     headerTitle: sections[sec].title,
                     collapsible: sections[sec].collapsible,
@@ -859,14 +1170,14 @@ Page {
                 if (!sortMode && sections[sec].collapsible && isFavGroupCollapsed(sections[sec].id)) {
                     continue
                 }
-                for (var r = 0; r < rows.length; r++) {
-                    mainListModel.append(helperStationObject(rows[r], false, "favorites"))
+                for (var r = 0; r < groupFavs.length; r++) {
+                    addRow(rows, seen, helperStationObject(groupFavs[r], false, "favorites"))
                 }
             }
         }
 
         if (rawHistory.count > 0) {
-            mainListModel.append({
+            addRow(rows, seen, {
                 isHeader: true,
                 headerTitle: qsTr("Station history"),
                 collapsible: true,
@@ -875,13 +1186,13 @@ Page {
             })
             if (!page.historyCollapsed) {
                 for (var h = 0; h < rawHistory.count; h++) {
-                    mainListModel.append(helperStationObject(rawHistory.get(h), true, "history"))
+                    addRow(rows, seen, helperStationObject(rawHistory.get(h), true, "history"))
                 }
             }
         }
 
         if (rawTopStations.count > 0) {
-            mainListModel.append({
+            addRow(rows, seen, {
                 isHeader: true,
                 headerTitle: qsTr("Top stations"),
                 collapsible: true,
@@ -890,7 +1201,7 @@ Page {
             })
             if (!page.topStationsCollapsed) {
                 for (var t = 0; t < rawTopStations.count; t++) {
-                    mainListModel.append(helperStationObject(rawTopStations.get(t), false, "top"))
+                    addRow(rows, seen, helperStationObject(rawTopStations.get(t), false, "top"))
                 }
             }
         }
@@ -1266,6 +1577,17 @@ Page {
         }
     }
 
+    // Order of the quick search results: A-Z, then grouped by how the name
+    // matches the phrase (RadioApi.groupByNameMatch - starts with / contains
+    // / rest). Before, everything was A-Z only, so "Radio si" did not bring
+    // Radio SI to the top.
+    function rankSearchResults(list, phrase) {
+        var sorted = list.slice().sort(function(a, b) {
+            return String(a.name || "").localeCompare(String(b.name || ""))
+        })
+        return RadioApi.groupByNameMatch(sorted, phrase)
+    }
+
     function searchStations(query) {
         var tokens = query.toLowerCase().split(/\s+/).filter(function(t) { return t.length > 0 })
 
@@ -1289,7 +1611,9 @@ Page {
         var cached = appWindow.persistentState.getCachedResults(cacheKey)
         if (cached) {
             cancelSearch()
-            populateRawModel(rawSearch, cached)
+            // Cached unranked (the key ignores the word order); ranked for
+            // the phrase as typed now
+            populateRawModel(rawSearch, rankSearchResults(cached, tokens.join(" ")).slice(0, 50))
             searchDone = true
             rebuildMainList()
             return
@@ -1325,6 +1649,15 @@ Page {
         for (var i = 0; i < fields.length; i++) {
             urls.push(apiBase + "search?" + fields[i] + "=" + encodeURIComponent(anchor) + "&limit=100&hidebroken=true")
         }
+        // Several words: also the whole phrase as part of the name. The
+        // longest word alone ("radio" for "radio kä") returns only the 100
+        // most popular "radio" stations, and none of them had to contain the
+        // word still being typed - "Radio Kärnten" only appeared once
+        // "kärnten" was complete. radio-browser's name search matches the
+        // phrase anywhere in the name, so "radio kä" finds it right away.
+        if (tokens.length > 1) {
+            urls.push(apiBase + "search?name=" + encodeURIComponent(tokens.join(" ")) + "&limit=100&hidebroken=true")
+        }
 
         RadioApi.fetchAll(urls, appWindow.apiUserAgent,
             function() { return currentRequestId !== searchRequestId },
@@ -1348,14 +1681,41 @@ Page {
                         results.push(station)
                     }
                 }
-                results.sort(function(a, b) { return a.name.localeCompare(b.name) })
-                results = results.slice(0, 50)
-
-                populateRawModel(rawSearch, results)
-                rebuildMainList()
                 if (cacheKey) {
                     appWindow.persistentState.setCachedResults(cacheKey, results)
                 }
+                populateRawModel(rawSearch, rankSearchResults(results, tokens.join(" ")).slice(0, 50))
+                rebuildMainList()
             })
+    }
+
+    // --- One-time hint on the first "Move": the start page only offers
+    // sorting, groups/backup/etc. live on the favourites page. Takes no
+    // touches (dragging near the bottom must keep working); disappears after
+    // 8 s or when the sort mode ends - and never comes back.
+    InteractionHintLabel {
+        id: moveHint
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: appWindow.playerBarBaseHeight
+        width: parent.width
+        z: 10
+        text: qsTr("Groups, backup and more: pull down and choose \"Manage favorites\"")
+        property bool shown: false
+        opacity: shown ? 1.0 : 0.0
+        visible: opacity > 0
+        Behavior on opacity { FadeAnimation { duration: 400 } }
+
+        function dismiss() {
+            if (shown) {
+                shown = false
+                appWindow.appSettings.moveHintShown = true
+            }
+        }
+    }
+
+    Timer {
+        id: moveHintHideTimer
+        interval: 8000
+        onTriggered: moveHint.dismiss()
     }
 }

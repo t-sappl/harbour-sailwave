@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import QtQuick 2.6
 import Sailfish.Silica 1.0
 import "StationLogo.js" as StationLogo
@@ -35,7 +36,9 @@ Item {
     readonly property string googleFaviconUrl: StationLogo.googleFaviconUrl(root.resolvedHomepage, 64)
 
     readonly property bool primaryUsable: root.faviconUrl.length > 0 && !appWindow.isIconUrlBroken(root.faviconUrl)
-    readonly property bool fallbackUsable: !primaryUsable && root.googleFaviconUrl.length > 0 && !appWindow.isIconUrlBroken(root.googleFaviconUrl)
+    // Google fallback only if allowed in the settings (privacy)
+    readonly property bool fallbackUsable: !primaryUsable && appWindow.appSettings.googleLogoFallback
+                                           && root.googleFaviconUrl.length > 0 && !appWindow.isIconUrlBroken(root.googleFaviconUrl)
 
     width: iconSize
     height: iconSize

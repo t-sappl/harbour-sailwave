@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import QtQuick 2.6
 import QtQuick.LocalStorage 2.0
 
@@ -20,12 +21,23 @@ Item {
     // flickering favicons.
     property var homepageOverridesCache: ({})
 
+    // The tables are created on the first access, not only in
+    // Component.onCompleted: the order of onCompleted handlers is not
+    // defined, and on a fresh install a page could query a table before it
+    // existed ("no such table: station_history", seen in the emulator).
+    property bool tablesReady: false
+
     function db() {
-        return LocalStorage.openDatabaseSync("harbour-sailwave", "1.0", "Sailwave Radio State", 200000)
+        var database = LocalStorage.openDatabaseSync("harbour-sailwave", "1.0", "Sailwave Radio State", 200000)
+        if (!tablesReady) {
+            tablesReady = true   // set first: initDb() itself calls db()
+            initDb()
+        }
+        return database
     }
 
     Component.onCompleted: {
-        initDb()
+        db()   // creates/migrates the tables if no one did so yet
         pruneSearchCache()
         loadHomepageOverridesCache()
     }
@@ -127,6 +139,13 @@ Item {
             // exists)
             try {
                 tx.executeSql("ALTER TABLE station_history ADD COLUMN homepage TEXT")
+            } catch (e) {
+                // Column already exists - no problem
+            }
+            // Same for the country code (v85: the lists show the country name
+            // from CountryData by code; older entries keep the stored name)
+            try {
+                tx.executeSql("ALTER TABLE station_history ADD COLUMN countrycode TEXT")
             } catch (e) {
                 // Column already exists - no problem
             }
@@ -437,11 +456,12 @@ Item {
         db().transaction(function(tx) {
             tx.executeSql(
                 "INSERT OR REPLACE INTO station_history " +
-                "(url, name, url_resolved, country, codec, bitrate, stationuuid, favicon, homepage, timestamp) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "(url, name, url_resolved, country, codec, bitrate, stationuuid, favicon, homepage, countrycode, timestamp) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 [station.url, station.name, station.url_resolved || "",
                  station.country || "", station.codec || "", station.bitrate || 0,
-                 station.stationuuid || "", station.favicon || "", station.homepage || "", now]
+                 station.stationuuid || "", station.favicon || "", station.homepage || "",
+                 station.countrycode || "", now]
             )
             // Keep the table small: only keep the last stationHistoryLimit entries
             tx.executeSql(
@@ -479,7 +499,8 @@ Item {
                     bitrate: row.bitrate,
                     stationuuid: row.stationuuid || "",
                     favicon: row.favicon || "",
-                    homepage: row.homepage || ""
+                    homepage: row.homepage || "",
+                    countrycode: row.countrycode || ""
                 })
             }
         })
