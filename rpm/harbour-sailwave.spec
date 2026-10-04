@@ -34,10 +34,41 @@ BuildRequires:  pkgconfig(Qt5Multimedia)
 BuildRequires:  pkgconfig(Qt5Network)
 BuildRequires:  pkgconfig(sailfishsecrets)
 BuildRequires:  desktop-file-utils
+# lrelease for the translations (CONFIG += sailfishapp_i18n) - the SDK has
+# it, a clean OBS/Chum build environment only with this
+BuildRequires:  qt5-qttools-linguist
 
 %description
-Sailwave is a simple internet radio player for Sailfish OS,
-based on the free community station database of radio-browser.info.
+Sailwave brings thousands of internet radio stations to Sailfish OS - from
+the community database radio-browser.info, in a native Silica interface:
+top stations matched to your listening, advanced search, favorites with
+groups, track history with album covers, sleep timer, lock screen controls,
+backups and optional WebDAV sync. No account, no tracking, no ads.
+
+%if 0%{?_chum}
+Title: Sailwave
+Type: desktop-application
+DeveloperName: Thomas Sappl
+Categories:
+ - Audio
+ - AudioVideo
+ - Player
+Custom:
+  Repo: https://github.com/t-sappl/harbour-sailwave
+PackageIcon: https://raw.githubusercontent.com/t-sappl/harbour-sailwave/main/icons/172x172/harbour-sailwave.png
+Screenshots:
+ - https://raw.githubusercontent.com/t-sappl/harbour-sailwave/main/screenshots/start-page.png
+ - https://raw.githubusercontent.com/t-sappl/harbour-sailwave/main/screenshots/player.png
+ - https://raw.githubusercontent.com/t-sappl/harbour-sailwave/main/screenshots/track-history.png
+ - https://raw.githubusercontent.com/t-sappl/harbour-sailwave/main/screenshots/advanced-search.png
+ - https://raw.githubusercontent.com/t-sappl/harbour-sailwave/main/screenshots/settings.png
+ - https://raw.githubusercontent.com/t-sappl/harbour-sailwave/main/screenshots/cover.png
+ - https://raw.githubusercontent.com/t-sappl/harbour-sailwave/main/screenshots/lock-screen.png
+ - https://raw.githubusercontent.com/t-sappl/harbour-sailwave/main/screenshots/backup.png
+Links:
+  Homepage: https://github.com/t-sappl/harbour-sailwave
+  Bugtracker: https://github.com/t-sappl/harbour-sailwave/issues
+%endif
 
 %prep
 %setup -q -n %{name}-%{version}
