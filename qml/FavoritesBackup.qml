@@ -467,8 +467,17 @@ Item {
         }
     }
 
+    // Only the server address entered (e.g. "https://cloud.example.com"):
+    // complete it to the Nextcloud/ownCloud WebDAV folder of the user, like
+    // other Nextcloud clients do. A PROPFIND on the server root is answered
+    // with 405/redirect, which looked like a wrong URL. Any URL with a path
+    // (Nextcloud in a subfolder, other WebDAV servers) is used as entered.
     function baseUrl() {
         var u = settings.webdavUrl.replace(/^\s+|\s+$/g, "")
+        if (/^https?:\/\/[^\/]+\/*$/i.test(u) && settings.webdavUser.length > 0) {
+            return u.replace(/\/+$/, "") + "/remote.php/dav/files/"
+                    + encodeURIComponent(settings.webdavUser) + "/"
+        }
         return /\/$/.test(u) ? u : u + "/"
     }
     function remoteFolder() { return baseUrl() + "Sailwave/" }

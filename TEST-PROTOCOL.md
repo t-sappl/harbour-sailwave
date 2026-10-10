@@ -435,3 +435,15 @@ Found while building for i486: on a fresh install the start page read the statio
 | 28.2 | Start with existing data on the phone | As before, favorites and histories there | [x] | OK – existing data and lock screen controls work with the v94 release package (regression check) |
 | 28.3 | Logo warnings in the log ("Error transferring … Not Found") | Only for stations whose logo URL is broken at radio-browser; a letter/fallback is shown instead | [x] | OK – expected warnings only (expected, not an app error) |
 
+
+## 29. WebDAV: server address only (v98)
+
+Found with a Hetzner Storage Share (Nextcloud): entering only the server address (`https://nx….your-storageshare.de`, as in other Nextcloud apps) gave "Connection failed – check the URL", because the server root is no WebDAV folder. Since v98 a URL without a path is completed to `<server>/remote.php/dav/files/<user name>/`.
+
+| # | Test | Expected | Result | Note |
+|---|---|---|---|---|
+| 29.1 | Settings: WebDAV URL = only the server address (no path), user name and app password, "Test connection" | "Connection successful" | [ ] | |
+| 29.2 | Backup page → WebDAV server (JSON) | File appears in Nextcloud in the folder `Sailwave` of the user's files | [ ] | |
+| 29.3 | Full URL as before (`…/remote.php/dav/files/USER/`) | Still works unchanged | [ ] | regression check |
+| 29.4 | Help text under "Backup and sync" and placeholder of the URL field (de/fr/es) | New text "server address is enough", translated | [ ] | |
+| 29.5 | Server address only, user name empty | "Test connection" fails with a message (no crash); after entering the user name it works | [ ] | |

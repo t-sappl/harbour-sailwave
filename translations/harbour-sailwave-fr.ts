@@ -776,8 +776,8 @@
         <translation>URL WebDAV</translation>
     </message>
     <message>
-        <source>Compatible with Nextcloud, ownCloud and standard WebDAV storage.</source>
-        <translation>Compatible avec Nextcloud, ownCloud et les stockages WebDAV standard.</translation>
+        <source>Nextcloud and ownCloud: the server address is enough (e.g. https://cloud.example.com). Other WebDAV storage: the full folder address.</source>
+        <translation>Nextcloud et ownCloud : l’adresse du serveur suffit (p. ex. https://cloud.example.com). Autre stockage WebDAV : l’adresse complète du dossier.</translation>
     </message>
     <message>
         <source>User name</source>

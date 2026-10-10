@@ -762,7 +762,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Compatible with Nextcloud, ownCloud and standard WebDAV storage.</source>
+        <source>Nextcloud and ownCloud: the server address is enough (e.g. https://cloud.example.com). Other WebDAV storage: the full folder address.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

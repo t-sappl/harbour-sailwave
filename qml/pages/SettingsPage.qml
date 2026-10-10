@@ -119,7 +119,7 @@ Page {
                     width: parent.width
                     text: appWindow.appSettings.webdavUrl
                     label: qsTr("WebDAV URL")
-                    placeholderText: "https://example.com/remote.php/dav/files/USER/"
+                    placeholderText: "https://cloud.example.com"
                     inputMethodHints: Qt.ImhUrlCharactersOnly | Qt.ImhNoAutoUppercase | Qt.ImhNoPredictiveText
                     EnterKey.iconSource: "image://theme/icon-m-enter-next"
                     EnterKey.onClicked: userField.focus = true
@@ -138,7 +138,8 @@ Page {
                     wrapMode: Text.Wrap
                     color: Theme.secondaryHighlightColor
                     font.pixelSize: Theme.fontSizeExtraSmall
-                    text: qsTr("Compatible with Nextcloud, ownCloud and standard WebDAV storage.")
+                    text: qsTr("Nextcloud and ownCloud: the server address is enough (e.g. https://cloud.example.com). "
+                               + "Other WebDAV storage: the full folder address.")
                 }
 
                 TextField {
