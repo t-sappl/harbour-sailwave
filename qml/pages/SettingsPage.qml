@@ -53,6 +53,14 @@ Page {
             }
 
             TextSwitch {
+                text: qsTr("Loop within favourite group")
+                description: qsTr("Next and Previous media control actions only switch between stations in the current favourite group.")
+                checked: appWindow.appSettings.loopWithinFavGroup
+                automaticCheck: false
+                onClicked: appWindow.appSettings.loopWithinFavGroup = !appWindow.appSettings.loopWithinFavGroup
+            }
+
+            TextSwitch {
                 text: qsTr("Fade out")
                 description: qsTr("Lowers the volume slowly during the last 30 seconds of the sleep timer.")
                 checked: appWindow.appSettings.sleepFadeOut

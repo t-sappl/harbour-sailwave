@@ -20,6 +20,8 @@ QtObject {
     property int sleepTimerMinutes: 30
     // Fade out slowly at the end of the sleep timer instead of stopping abruptly
     property bool sleepFadeOut: true
+    // MPIRS / Cover page: Loop trough all stations or only the current favorite group (if there is any)
+    property bool loopWithinFavGroup: true
 
     // --- Discover ---
     // Home country as ISO code ("AT"); empty = detect automatically
@@ -106,6 +108,7 @@ QtObject {
     onAutoplayLastStationChanged: save("autoplayLastStation")
     onSleepTimerMinutesChanged: save("sleepTimerMinutes")
     onSleepFadeOutChanged: save("sleepFadeOut")
+    onLoopWithinFavGroupChanged: save("loopWithinFavGroup")
     onHomeCountryChanged: save("homeCountry")
     onAutoVoteOnFavoriteChanged: save("autoVoteOnFavorite")
     onWebdavUseChanged: {

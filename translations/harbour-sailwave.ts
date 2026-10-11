@@ -837,6 +837,14 @@
         <source>Uploads every change and checks for changes from other devices at start-up. When off, the server is only used when backing up or restoring manually.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Loop within favourite group</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next and Previous media control actions only switch between stations in the current favourite group.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>SleepBadge</name>

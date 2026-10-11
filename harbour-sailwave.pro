@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 TARGET = harbour-sailwave
+VERSION: 1.0.1
 
 CONFIG += sailfishapp sailfishapp_i18n
 TRANSLATIONS += \

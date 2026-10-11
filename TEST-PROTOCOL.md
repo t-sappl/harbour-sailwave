@@ -442,8 +442,24 @@ Found with a Hetzner Storage Share (Nextcloud): entering only the server address
 
 | # | Test | Expected | Result | Note |
 |---|---|---|---|---|
-| 29.1 | Settings: WebDAV URL = only the server address (no path), user name and app password, "Test connection" | "Connection successful" | [ ] | |
-| 29.2 | Backup page → WebDAV server (JSON) | File appears in Nextcloud in the folder `Sailwave` of the user's files | [ ] | |
-| 29.3 | Full URL as before (`…/remote.php/dav/files/USER/`) | Still works unchanged | [ ] | regression check |
-| 29.4 | Help text under "Backup and sync" and placeholder of the URL field (de/fr/es) | New text "server address is enough", translated | [ ] | |
-| 29.5 | Server address only, user name empty | "Test connection" fails with a message (no crash); after entering the user name it works | [ ] | |
+| 29.1 | Settings: WebDAV URL = only the server address (no path), user name and app password, "Test connection" | "Connection successful" | [x] | OK (v98) |
+| 29.2 | Backup page → WebDAV server (JSON) | File appears in Nextcloud in the folder `Sailwave` of the user's files | [x] | OK (v98) |
+| 29.3 | Full URL as before (`…/remote.php/dav/files/USER/`) | Still works unchanged | [x] | OK (v98) – regression check |
+| 29.4 | Help text under "Backup and sync" and placeholder of the URL field (de/fr/es) | New text "server address is enough", translated | [x] | OK (v98) |
+| 29.5 | Server address only, user name empty | "Test connection" fails with a message (no crash); after entering the user name it works | [x] | OK (v98) |
+
+
+## 30. Media player Controls loop through favorite group only (v99)
+
+new Feature: added Next and Prev control Buttons on the Lockscreen. Control buttons switch beetwen the favourite stations - either within the current favourite group or all favourites (behaviour can be changed with new Setting)
+new Setting: when active the Next and Prev controls of the Media Player Controls on cover page and lockscreen switch only through the current favourite group. When inactive, all stored favorites are used for Next and Prev
+
+
+| # | Test | Expected | Result | Note |
+|---|---|---|---|---|
+| 29.1 | Settings: WebDAV URL = only the server address (no path), user name and app password, "Test connection" | "Connection successful" | [x] | OK (v99) |
+| 29.2 | Backup page → WebDAV server (JSON) | File appears in Nextcloud in the folder `Sailwave` of the user's files | [x] | OK (v99) |
+| 29.3 | Full URL as before (`…/remote.php/dav/files/USER/`) | Still works unchanged | [x] | OK (v99) – regression check |
+| 29.4 | Help text under "Backup and sync" and placeholder of the URL field (de/fr/es) | New text "server address is enough", translated | [x] | OK (v99) |
+| 29.5 | Server address only, user name empty | "Test connection" fails with a message (no crash); after entering the user name it works | [x] | OK (v99) |
+

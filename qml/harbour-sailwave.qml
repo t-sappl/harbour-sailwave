@@ -72,7 +72,7 @@ ApplicationWindow {
 
     // App version number (for "About Sailwave" and the User-Agent).
     // Bump it with every release, together with the version in the .spec/.yaml.
-    readonly property string appVersion: "1.0"
+    readonly property string appVersion: "1.0.1"
 
     // radio-browser.info API etiquette: our own User-Agent instead of the Qt default
     property string apiUserAgent: "harbour-sailwave/" + appVersion
@@ -598,7 +598,7 @@ ApplicationWindow {
         }
     }
 
-    // --- Cover action "next favourite" ---
+    // --- Cover action / MPRIS "next favourite" ---
     // With groups (I1): the next favourite of the playing station's group
     // (groups are usually thematic, e.g. news / music). If the station is
     // not a favourite, has no group, or is alone in its group: through all
@@ -608,17 +608,19 @@ ApplicationWindow {
         if (!currentStation) {
             return favs
         }
-        var groupId = 0
-        for (var i = 0; i < favs.length; i++) {
-            if (favs[i].url === currentStation.url) {
-                groupId = favs[i].groupId
-                break
+        if (appSettingsInstance.loopWithinFavGroup) {
+            var groupId = 0
+            for (var i = 0; i < favs.length; i++) {
+                if (favs[i].url === currentStation.url) {
+                    groupId = favs[i].groupId
+                    break
+                }
             }
-        }
-        if (groupId > 0) {
-            var inGroup = favoritesStore.favoritesOfGroup(groupId)
-            if (inGroup.length > 1) {
-                return inGroup
+            if (groupId > 0) {
+                var inGroup = favoritesStore.favoritesOfGroup(groupId)
+                if (inGroup.length > 1) {
+                    return inGroup
+                }
             }
         }
         return favs
@@ -651,6 +653,30 @@ ApplicationWindow {
         }
         playStation(list[(index + 1) % list.length])
     }
+
+
+     //Feature Request: also play previous Favorite on MPRIS
+    //same logic: so going through the list of cancidates in the other direction
+    function playPrevFavorite() {
+            var list = nextFavoriteCandidates()
+            if (list.length === 0) {
+                return
+            }
+            var index = -1
+            if (currentStation) {
+                for (var i = 0; i < list.length; i++) {
+                    if (list[i].url === currentStation.url) {
+                        index = i
+                        break
+                    }
+                }
+            }
+            // Wenn kein Sender läuft oder nicht gefunden, starte beim letzten Element.
+            // Ansonsten im Kreis einen Index zurückgehen (-1 mit Überlauf zu list.length - 1).
+            var targetIndex = (index === -1) ? list.length - 1 : (index - 1 + list.length) % list.length
+            playStation(list[targetIndex])
+        }
+
 
     // Short message at the bottom of the screen (see MessageBanner.qml)
     function showMessage(text) {

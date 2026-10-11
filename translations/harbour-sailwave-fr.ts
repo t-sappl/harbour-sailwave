@@ -851,6 +851,14 @@
         <source>Uploads every change and checks for changes from other devices at start-up. When off, the server is only used when backing up or restoring manually.</source>
         <translation>Envoie chaque modification et vérifie au démarrage les modifications d’autres appareils. Désactivé, le serveur n’est utilisé que lors des sauvegardes ou restaurations manuelles.</translation>
     </message>
+    <message>
+        <source>Loop within favourite group</source>
+        <translation>Boucle dans le groupe de favoris</translation>
+    </message>
+    <message>
+        <source>Next and Previous media control actions only switch between stations in the current favourite group.</source>
+        <translation>Les actions Suivant et Précédent des contrôles média basculent uniquement entre les stations du groupe de favoris actuel.</translation>
+    </message>
 </context>
 <context>
     <name>SleepBadge</name>

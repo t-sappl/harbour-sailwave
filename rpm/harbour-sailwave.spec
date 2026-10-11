@@ -2,7 +2,7 @@
 Name:       harbour-sailwave
 
 Summary:    Internet radio player for Sailfish OS
-Version:    1.0
+Version:    1.0.1
 Release:    1
 License:    GPL-3.0-or-later
 URL:        https://github.com/t-sappl/harbour-sailwave/
@@ -93,5 +93,8 @@ desktop-file-install --delete-original \
 %{_datadir}/icons/hicolor/*/apps/%{name}.png
 
 %changelog
+* Sun Oct 11 2026 Thomas Sappl <thomas.sappl@gmail.com> - 1.0-1
+- New Feature: Added Next and Previous control buttons on the lock screen and cover page.
+- New Setting: Added option to restrict Next and Previous media actions to the current favourite group instead of cycling through all favourites.
 * Sat Oct 03 2026 Thomas Sappl <thomas.sappl@gmail.com> - 1.0-1
 - First public release.

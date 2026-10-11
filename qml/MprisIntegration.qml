@@ -26,8 +26,8 @@ MprisPlayer {
     canControl: true
     canPlay: appWindow.currentStation !== null
     canPause: appWindow.currentStation !== null
-    canGoNext: false
-    canGoPrevious: false
+    canGoNext: true
+    canGoPrevious: true
     canSeek: false
     canQuit: false
     canRaise: false
@@ -62,6 +62,17 @@ MprisPlayer {
             appWindow.togglePlayback()
         }
     }
+    onNextRequested: {
+        if (appWindow.isPlaying) {
+            appWindow.playNextFavorite()
+        }
+    }
+    onPreviousRequested: {
+        if (appWindow.isPlaying) {
+            appWindow.playPrevFavorite()
+        }
+    }
+
     onPlayPauseRequested: appWindow.togglePlayback()
     onStopRequested: appWindow.stopPlayback()
 }
