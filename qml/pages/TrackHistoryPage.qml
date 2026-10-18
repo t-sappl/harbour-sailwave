@@ -160,8 +160,10 @@ Page {
     SilicaListView {
         id: listView
         anchors.fill: parent
-        // Ends above the collapsed PlayerBar (see appWindow.playerBarBaseHeight)
+        // Ends above the collapsed PlayerBar (see appWindow.playerBarBaseHeight),
+        // in landscape left of the player panel
         anchors.bottomMargin: appWindow.playerBarBaseHeight
+        anchors.rightMargin: appWindow.playerPanelWidth
         model: mainListModel
         // No current item: otherwise every rebuild of the model (each search
         // letter) moves the current item and the search field loses focus

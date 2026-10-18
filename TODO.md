@@ -2,9 +2,16 @@
 
 Open items and plans. Architecture and design decisions are in [`DESIGN.md`](DESIGN.md), tests in [`TEST-PROTOCOL.md`](TEST-PROTOCOL.md).
 
-## Version 1.1 – planned
+## Version 1.1 – tested, ready for release
 
-- [ ] **Landscape:** support landscape on all pages (1.0 is portrait only) – check the player bar height, cover, filter chips and dialogs
+- [x] **Package name `harbour-sailwave-radio`** with a transitional `harbour-sailwave` for OpenRepos users (see DESIGN 10b)
+- [ ] **Screenshot** `landscape-tiles.png` (tiles + player panel in landscape) for README, Jolla Store, OpenRepos
+- [x] **Lock screen / car controls:** `Requires: qml(Amber.Mpris)`, next/previous also while paused
+- [x] **Landscape:** support landscape on all pages (1.0 is portrait only; requested by users, e.g. for use in the car) – player panel on the right (see DESIGN 5a), tested
+- [x] **Favorite tiles:** large favourite tiles as an extra ring page, setting off / always / only in landscape + open when turning (see DESIGN 5b), tested
+
+## Version 1.2 – planned
+
 - [ ] **Restoring:** favourites whose station no longer exists at radio-browser.info – additionally search by stream URL or by name and country
 - [ ] **Advanced search:** review the search logic based on experience – how genre, language and country filters are combined, "All genres/languages must match", sorting of the results
 - [ ] **Corrections to radio-browser.info:** send station data corrections (e.g. homepage, logo) to radio-browser.info – first find out why Shortwave removed this feature again and whether there are solutions (confirmation before sending, plausibility checks of the data, …)
@@ -23,5 +30,8 @@ Open items and plans. Architecture and design decisions are in [`DESIGN.md`](DES
 - [ ] Start page: favourite groups, station history and top stations look alike (all collapsible sections) – keep an eye on it
 
 ## Known issues
+
+- Headset buttons with two media apps (e.g. Sailcast) running: after a pause, the play button may start the other app – Sailfish OS decides which player gets the buttons. Keep watching.
+- Headset "next" occasionally went to the previous favorite in a test (cover and lock screen were correct) – probably the earbud gesture (triple instead of double tap). Keep watching.
 
 - Favourites page: dragging the bottom favourite occasionally fails the first time (not reliably reproducible).

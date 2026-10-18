@@ -1,12 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-TARGET = harbour-sailwave
-VERSION: 1.0.1
+# Package name harbour-sailwave-radio since 1.1 (harbour-sailwave was
+# taken). The data folders stay the same: they follow OrganizationName /
+# ApplicationName in the .desktop file, which are still harbour-sailwave.
+TARGET = harbour-sailwave-radio
 
 CONFIG += sailfishapp sailfishapp_i18n
 TRANSLATIONS += \
-    translations/harbour-sailwave-de.ts \
-    translations/harbour-sailwave-fr.ts \
-    translations/harbour-sailwave-es.ts
+    translations/harbour-sailwave-radio-de.ts \
+    translations/harbour-sailwave-radio-fr.ts \
+    translations/harbour-sailwave-radio-es.ts
 
 QT += network multimedia
 
@@ -32,8 +34,8 @@ HEADERS += \
 
 # Listed only so that Qt Creator shows them in the project tree.
 # Installation is handled by CONFIG += sailfishapp (the whole qml/ folder).
-OTHER_FILES += rpm/harbour-sailwave.spec \
-    harbour-sailwave.desktop \
+OTHER_FILES += rpm/harbour-sailwave-radio.spec \
+    harbour-sailwave-radio.desktop \
     qml/harbour-sailwave.qml \
     qml/AppSettings.qml \
     qml/CoverArtCache.qml \
@@ -44,6 +46,7 @@ OTHER_FILES += rpm/harbour-sailwave.spec \
     qml/MprisIntegration.qml \
     qml/PersistentState.qml \
     qml/PlayerBar.qml \
+    qml/PlayerPanel.qml \
     qml/RingHint.qml \
     qml/MessageBanner.qml \
     qml/SleepBadge.qml \
@@ -62,6 +65,7 @@ OTHER_FILES += rpm/harbour-sailwave.spec \
     qml/pages/AdvancedSearchPage.qml \
     qml/pages/BackupPage.qml \
     qml/pages/CountryPickerPage.qml \
+    qml/pages/FavoriteTilesPage.qml \
     qml/pages/FavoritesPage.qml \
     qml/pages/GroupNameDialog.qml \
     qml/pages/HomepageDialog.qml \
@@ -75,13 +79,13 @@ OTHER_FILES += rpm/harbour-sailwave.spec \
     translations/*.ts
 
 # Install the app icons in the four sizes Sailfish OS expects
-icon86.files = icons/86x86/harbour-sailwave.png
+icon86.files = icons/86x86/harbour-sailwave-radio.png
 icon86.path = /usr/share/icons/hicolor/86x86/apps
-icon108.files = icons/108x108/harbour-sailwave.png
+icon108.files = icons/108x108/harbour-sailwave-radio.png
 icon108.path = /usr/share/icons/hicolor/108x108/apps
-icon128.files = icons/128x128/harbour-sailwave.png
+icon128.files = icons/128x128/harbour-sailwave-radio.png
 icon128.path = /usr/share/icons/hicolor/128x128/apps
-icon172.files = icons/172x172/harbour-sailwave.png
+icon172.files = icons/172x172/harbour-sailwave-radio.png
 icon172.path = /usr/share/icons/hicolor/172x172/apps
 
 INSTALLS += icon86 icon108 icon128 icon172

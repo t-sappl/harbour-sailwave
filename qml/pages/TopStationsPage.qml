@@ -103,8 +103,10 @@ Page {
     SilicaListView {
         id: listView
         anchors.fill: parent
-        // Ends above the collapsed PlayerBar (see appWindow.playerBarBaseHeight)
+        // Ends above the collapsed PlayerBar (see appWindow.playerBarBaseHeight),
+        // in landscape left of the player panel
         anchors.bottomMargin: appWindow.playerBarBaseHeight
+        anchors.rightMargin: appWindow.playerPanelWidth
         cacheBuffer: 800
         currentIndex: -1
 
@@ -1697,7 +1699,7 @@ Page {
         id: moveHint
         anchors.bottom: parent.bottom
         anchors.bottomMargin: appWindow.playerBarBaseHeight
-        width: parent.width
+        width: parent.width - appWindow.playerPanelWidth
         z: 10
         text: qsTr("Groups, backup and more: pull down and choose \"Manage favorites\"")
         property bool shown: false

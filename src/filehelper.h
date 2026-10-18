@@ -15,7 +15,7 @@
 // Plain file access for QML (favourites backup, M3U export, file chooser).
 // QML itself cannot write files. Available in QML as "fileHelper".
 // Paths outside the app's own data folder need the matching Sailjail
-// permission in harbour-sailwave.desktop (Documents, UserDirs ...).
+// permission in harbour-sailwave-radio.desktop (Documents, UserDirs ...).
 class FileHelper : public QObject
 {
     Q_OBJECT

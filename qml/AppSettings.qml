@@ -20,8 +20,17 @@ QtObject {
     property int sleepTimerMinutes: 30
     // Fade out slowly at the end of the sleep timer instead of stopping abruptly
     property bool sleepFadeOut: true
-    // MPIRS / Cover page: Loop trough all stations or only the current favorite group (if there is any)
+    // Next/previous (cover, MPRIS): only within the playing station's favourite
+    // group (true) or through all favourites (false)
     property bool loopWithinFavGroup: true
+
+    // --- Favorite tiles (1.1) ---
+    // Extra ring page with large favourite tiles (e.g. for the car):
+    // "off", "always" (portrait and landscape) or "landscape" (only while
+    // the phone is in landscape)
+    property string tileView: "off"
+    // Switch to the tile page when the phone is turned to landscape
+    property bool tileViewAutoOpen: true
 
     // --- Discover ---
     // Home country as ISO code ("AT"); empty = detect automatically
@@ -83,6 +92,9 @@ QtObject {
         autoplayLastStation: "bool",
         sleepTimerMinutes: "int",
         sleepFadeOut: "bool",
+        loopWithinFavGroup: "bool",
+        tileView: "string",
+        tileViewAutoOpen: "bool",
         homeCountry: "string",
         autoVoteOnFavorite: "bool",
         webdavUse: "bool",
@@ -109,6 +121,8 @@ QtObject {
     onSleepTimerMinutesChanged: save("sleepTimerMinutes")
     onSleepFadeOutChanged: save("sleepFadeOut")
     onLoopWithinFavGroupChanged: save("loopWithinFavGroup")
+    onTileViewChanged: save("tileView")
+    onTileViewAutoOpenChanged: save("tileViewAutoOpen")
     onHomeCountryChanged: save("homeCountry")
     onAutoVoteOnFavoriteChanged: save("autoVoteOnFavorite")
     onWebdavUseChanged: {

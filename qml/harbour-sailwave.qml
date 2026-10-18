@@ -72,7 +72,7 @@ ApplicationWindow {
 
     // App version number (for "About Sailwave" and the User-Agent).
     // Bump it with every release, together with the version in the .spec/.yaml.
-    readonly property string appVersion: "1.0.1"
+    readonly property string appVersion: "1.1"
 
     // radio-browser.info API etiquette: our own User-Agent instead of the Qt default
     property string apiUserAgent: "harbour-sailwave/" + appVersion
@@ -90,13 +90,35 @@ ApplicationWindow {
     property Page ringTrackHistoryPage: TrackHistoryPage { ringMember: true; objectName: "ringTrackHistory" }
     property Page ringAdvancedSearchPage: AdvancedSearchPage { ringMember: true; objectName: "ringAdvancedSearch" }
 
+    // Favorite tiles (1.1): a fourth ring page left of the start page,
+    // depending on the setting "Favorite tiles" - always, or only while the
+    // phone is in landscape. Created on first use (most people never
+    // switch it on).
+    property Page ringFavoriteTilesPage: null
+    readonly property bool tilesInRing: appSettingsInstance.tileView === "always"
+                                        || (appSettingsInstance.tileView === "landscape" && landscapeLayout)
+
+    Component {
+        id: favoriteTilesComponent
+        FavoriteTilesPage { ringMember: true; objectName: "ringFavoriteTiles" }
+    }
+
+    function favoriteTilesPage() {
+        if (!ringFavoriteTilesPage) {
+            ringFavoriteTilesPage = favoriteTilesComponent.createObject(appWindow)
+        }
+        return ringFavoriteTilesPage
+    }
+
     // No initialPage: Silica warns when it is given an existing page object
     // instead of a Component ("sub-optimal"). The ring needs the fixed
     // instance, so the start page is pushed in Component.onCompleted instead.
     cover: CoverPage {}
-    // Portrait only in 1.0 (landscape is planned for 1.1, all pages would
-    // need to be checked and adapted)
-    allowedOrientations: Orientation.Portrait
+    // Portrait and landscape (1.1). defaultAllowedOrientations means
+    // portrait only on phones, and the pages take their orientations from
+    // _defaultPageOrientations - both are needed (same as Sailfeed).
+    allowedOrientations: Orientation.All
+    _defaultPageOrientations: Orientation.All
 
     FavoritesStore {
         id: favoritesStore
@@ -203,7 +225,7 @@ ApplicationWindow {
         asynchronous: false
         onStatusChanged: {
             if (status === Loader.Error) {
-                console.warn("MPRIS integration not available (amber-mpris-qt5 missing) - app keeps running normally")
+                console.warn("MPRIS integration not available (qml(Amber.Mpris) missing) - app keeps running normally")
             }
         }
     }
@@ -238,7 +260,19 @@ ApplicationWindow {
 
     // Height of the global PlayerBar, for the bottom margin of page content.
     // 0 while no station is selected (the bar then shows no content anyway).
-    readonly property real playerBarHeight: currentStation ? playerBar.height : 0
+    readonly property real playerBarHeight: (currentStation && !landscapeLayout) ? playerBar.height : 0
+
+    // --- Landscape (1.1): the PlayerBar becomes a player panel on the right ---
+    // In landscape the height is short and a bar at the bottom would take a
+    // large part of it, so the player is a column on the right instead
+    // (PlayerPanel.qml) and the pages end left of it (anchors.rightMargin:
+    // playerPanelWidth on their views). The ring swiping stays on the left.
+    readonly property bool landscapeLayout: uiLayer.width > uiLayer.height
+    // Width the panel takes (0 in portrait, without a station and on the
+    // pages that hide the player, e.g. settings)
+    readonly property real playerPanelWidth: (landscapeLayout && currentStation && !playerBar.isHiddenPage)
+                                             ? playerPanelFullWidth : 0
+    readonly property real playerPanelFullWidth: Math.round(uiLayer.width * 0.38)
 
     // Lists and flickables end above the *collapsed* PlayerBar (their view is
     // shortened by playerBarBaseHeight via anchors.bottomMargin). Then
@@ -247,7 +281,7 @@ ApplicationWindow {
     // while the menu opened fought Silica's scrolling and could trigger a
     // menu entry under the finger. The collapsed height is used on purpose:
     // otherwise the list would shrink whenever the bar is expanded.
-    readonly property real playerBarBaseHeight: currentStation ? playerBar.collapsedHeight : 0
+    readonly property real playerBarBaseHeight: (currentStation && !landscapeLayout) ? playerBar.collapsedHeight : 0
     // The part of the (expanded) bar that lies on top of such a view - the
     // footers add this much space so the last rows can still be scrolled
     // above the expanded bar. 0 while the bar is collapsed.
@@ -469,25 +503,112 @@ ApplicationWindow {
         if (pageStack.currentPage === target) {
             return
         }
-        pageStack.clear()
-        pageStack.push(prevRingPage(target), {}, PageStackAction.Immediate)
-        pageStack.push(target)
+        _rebuildRing(prevRingPage(target), target, false)
     }
 
-    // Ring order: every page has exactly one right-hand neighbour.
+    // Ring order, left to right; the last page's right-hand neighbour is the
+    // first one. With the favorite tiles: tiles -> start page -> track
+    // history -> advanced search -> tiles.
+    function ringPages() {
+        var pages = [ringTopStationsPage, ringTrackHistoryPage, ringAdvancedSearchPage]
+        if (tilesInRing) {
+            pages.unshift(favoriteTilesPage())
+        }
+        return pages
+    }
+
+    // Every page has exactly one right-hand neighbour.
     function nextRingPage(page) {
-        if (page === ringTopStationsPage) return ringTrackHistoryPage
-        if (page === ringTrackHistoryPage) return ringAdvancedSearchPage
-        if (page === ringAdvancedSearchPage) return ringTopStationsPage
-        return null
+        var pages = ringPages()
+        var i = pages.indexOf(page)
+        return i < 0 ? null : pages[(i + 1) % pages.length]
     }
 
     // Left-hand neighbour in the ring (inverse of nextRingPage).
     function prevRingPage(page) {
-        if (page === ringTopStationsPage) return ringAdvancedSearchPage
-        if (page === ringTrackHistoryPage) return ringTopStationsPage
-        if (page === ringAdvancedSearchPage) return ringTrackHistoryPage
-        return null
+        var pages = ringPages()
+        var i = pages.indexOf(page)
+        return i < 0 ? null : pages[(i - 1 + pages.length) % pages.length]
+    }
+
+    // Shows a ring page directly (rebuilds the stack around it, without
+    // animation); the ring logic then attaches its right-hand neighbour.
+    function showRingPage(target) {
+        if (pageStack.currentPage === target) {
+            return
+        }
+        _rebuildRing(prevRingPage(target), target, true)
+    }
+
+    // Puts the stack together as [prev][page] (the ring logic then attaches
+    // the right-hand neighbour). Guarded: if the stack could not be emptied
+    // (Silica still busy) or a page is already on top, nothing is pushed on
+    // top of it - pushing the same page instance twice in a row makes Silica
+    // fail with "two consecutive entries of the same page instance" (seen
+    // while turning the phone with "only in landscape"). The ring check then
+    // simply tries again.
+    function _rebuildRing(prev, page, immediate) {
+        _ringAttachedTo = null
+        _ringAttachedNext = null
+        pageStack.clear()
+        if (pageStack.depth > 0) {
+            console.warn("[Ring] Page stack not cleared, trying again")
+            ringPageActivated(pageStack.currentPage)
+            return
+        }
+        pageStack.push(prev, {}, PageStackAction.Immediate)
+        if (pageStack.currentPage !== page) {
+            pageStack.push(page, {}, immediate ? PageStackAction.Immediate : PageStackAction.Animated)
+        }
+    }
+
+    // The ring changed (tiles switched on/off, or "only in landscape" and
+    // the phone was turned): fix the neighbours, leave the tiles if they are
+    // no longer part of it. Delayed, so the rotation can finish first.
+    onTilesInRingChanged: ringChangeTimer.restart()
+
+    // Turned to landscape: open the tiles if wanted (only from a ring page -
+    // a station info or settings page stays where it is)
+    onLandscapeLayoutChanged: {
+        // The bar is not used in landscape: collapse it, so its track
+        // preview is not refreshed in the background and portrait starts
+        // compact
+        if (landscapeLayout) {
+            playerBar.expanded = false
+        }
+        if (landscapeLayout && appSettingsInstance.tileView !== "off" && appSettingsInstance.tileViewAutoOpen) {
+            tilesAutoOpenPending = true
+            ringChangeTimer.restart()
+        }
+    }
+    property bool tilesAutoOpenPending: false
+
+    Timer {
+        id: ringChangeTimer
+        interval: 400
+        property int _waits: 0
+        onTriggered: {
+            var page = pageStack.currentPage
+            // Wait until the rotation and any page transition are over
+            if ((pageStack.busy || (page && page.status !== PageStatus.Active)) && _waits < 25) {
+                _waits += 1
+                restart()
+                return
+            }
+            _waits = 0
+            var openTiles = appWindow.tilesAutoOpenPending
+            appWindow.tilesAutoOpenPending = false
+            if (!page || !page.ringMember) {
+                return
+            }
+            if (openTiles && appWindow.tilesInRing) {
+                appWindow.showRingPage(appWindow.favoriteTilesPage())
+            } else if (appWindow.ringPages().indexOf(page) < 0) {
+                appWindow.showRingPage(ringTopStationsPage)
+            } else {
+                appWindow.ringPageActivated(page)
+            }
+        }
     }
 
     // The ring logic is triggered not only by the page's status change but
@@ -510,6 +631,10 @@ ApplicationWindow {
     }
 
     property int _ringRetries: 0
+    // Which ring page has which right-hand neighbour attached (see
+    // _applyRingNavigation)
+    property var _ringAttachedTo: null
+    property var _ringAttachedNext: null
 
     Timer {
         id: ringTimer
@@ -520,6 +645,12 @@ ApplicationWindow {
     function _applyRingNavigation() {
         var page = pageStack.currentPage
         if (!page || !page.ringMember) {
+            return
+        }
+        // The ring is changing (tiles in/out while turning the phone): the
+        // delayed ringChangeTimer handles it - never two places rebuilding
+        // the stack at the same time
+        if (ringChangeTimer.running) {
             return
         }
 
@@ -535,20 +666,37 @@ ApplicationWindow {
             return
         }
 
+        // The tiles are no longer part of the ring (e.g. back from a station
+        // info after turning to portrait with "only in landscape")
+        if (ringPages().indexOf(page) < 0) {
+            showRingPage(ringTopStationsPage)
+            return
+        }
+
         var wantedPrev = prevRingPage(page)
         var prev = pageStack.previousPage(page)
         var prevIsBase = prev && !pageStack.previousPage(prev)
 
         if (prev !== wantedPrev || !prevIsBase) {
-            pageStack.clear()
-            pageStack.push(wantedPrev, {}, PageStackAction.Immediate)
-            pageStack.push(page, {}, PageStackAction.Immediate)
+            _rebuildRing(wantedPrev, page, true)
             return
         }
 
+        // Attach the right-hand neighbour. Which page is attached is
+        // remembered here: PageStack.nextPage() does not report an attached
+        // page that has not been entered, and comparing with it attached the
+        // same page again on every check - while turning the phone Silica then
+        // failed with "two consecutive entries of the same page instance".
+        var next = nextRingPage(page)
         if (!page.canNavigateForward) {
-            var next = nextRingPage(page)
             pageStack.pushAttached(next)
+            _ringAttachedTo = page
+            _ringAttachedNext = next
+        } else if (_ringAttachedTo === page && _ringAttachedNext !== next) {
+            // The ring changed (tiles switched on/off or turned): rebuild the
+            // stack around the page, the next check attaches the new
+            // neighbour (no attaching over an existing attached page)
+            _rebuildRing(wantedPrev, page, true)
         }
     }
 
@@ -598,11 +746,12 @@ ApplicationWindow {
         }
     }
 
-    // --- Cover action / MPRIS "next favourite" ---
-    // With groups (I1): the next favourite of the playing station's group
-    // (groups are usually thematic, e.g. news / music). If the station is
-    // not a favourite, has no group, or is alone in its group: through all
-    // favourites. Order = order on the start page.
+    // --- Cover action / MPRIS "next/previous favourite" ---
+    // With groups (I1) and the setting "Stay within favorite group" on
+    // (default): the favourites of the playing station's group (groups are
+    // usually thematic, e.g. news / music). If the setting is off, the
+    // station is not a favourite, has no group, or is alone in its group:
+    // through all favourites. Order = order on the start page.
     function nextFavoriteCandidates() {
         var favs = favoritesStore.favorites
         if (!currentStation) {
@@ -626,6 +775,9 @@ ApplicationWindow {
         return favs
     }
 
+    // True if next/previous would change the station: used by the cover
+    // (second action) and by MPRIS (canGoNext/canGoPrevious - the lock
+    // screen then only shows the buttons when they do something).
     readonly property bool canPlayNextFavorite: {
         var favs = favoritesStore.favorites
         if (favs.length === 0) {
@@ -637,7 +789,10 @@ ApplicationWindow {
         return !currentStation || favs[0].url !== currentStation.url
     }
 
-    function playNextFavorite() {
+    // step = +1 (next) or -1 (previous), wrapping around. If no station is
+    // playing or it is not in the list: next starts with the first,
+    // previous with the last entry. Also starts playback when paused.
+    function playFavoriteByStep(step) {
         var list = nextFavoriteCandidates()
         if (list.length === 0) {
             return
@@ -651,32 +806,22 @@ ApplicationWindow {
                 }
             }
         }
-        playStation(list[(index + 1) % list.length])
+        var target
+        if (index === -1) {
+            target = step > 0 ? 0 : list.length - 1
+        } else {
+            target = (index + step + list.length) % list.length
+        }
+        playStation(list[target])
     }
 
+    function playNextFavorite() {
+        playFavoriteByStep(1)
+    }
 
-     //Feature Request: also play previous Favorite on MPRIS
-    //same logic: so going through the list of cancidates in the other direction
     function playPrevFavorite() {
-            var list = nextFavoriteCandidates()
-            if (list.length === 0) {
-                return
-            }
-            var index = -1
-            if (currentStation) {
-                for (var i = 0; i < list.length; i++) {
-                    if (list[i].url === currentStation.url) {
-                        index = i
-                        break
-                    }
-                }
-            }
-            // Wenn kein Sender läuft oder nicht gefunden, starte beim letzten Element.
-            // Ansonsten im Kreis einen Index zurückgehen (-1 mit Überlauf zu list.length - 1).
-            var targetIndex = (index === -1) ? list.length - 1 : (index - 1 + list.length) % list.length
-            playStation(list[targetIndex])
-        }
-
+        playFavoriteByStep(-1)
+    }
 
     // Short message at the bottom of the screen (see MessageBanner.qml)
     function showMessage(text) {
@@ -718,167 +863,201 @@ ApplicationWindow {
                          : station.url
     }
 
-    PlayerBar {
-        id: playerBar
-        anchors.bottom: parent.bottom
-        width: parent.width
+    // --- Window-level UI (player bar/panel, hints, message banner) ---
+    // Items of the window itself do not turn with the pages (Silica rotates
+    // each page): this layer copies the current page's size and rotation,
+    // so everything in it follows the orientation (same solution as
+    // Sailfeed). Without it the PlayerBar stayed upright across the screen
+    // in landscape.
+    Item {
+        id: uiLayer
+        readonly property Item page: pageStack.currentPage
+        anchors.centerIn: parent
+        width: page ? page.width : parent.width
+        height: page ? page.height : parent.height
+        rotation: page ? page.rotation : 0
         z: 100
-    }
 
-    // --- One-time hints above the PlayerBar, one after the other:
-    // 1. the station name opens the station info (the pulley entry for it
-    //    was removed), 2. the arrow expands the bar (recent tracks, sleep
-    //    timer - the moon only exists in the expanded bar).
-    // Each appears 1.5 s after the PlayerBar is there (the second one 1.5 s
-    // after the first is gone), disappears on tap or after 8 s - and never
-    // comes back. The first also goes when the station info is opened, the
-    // second when the bar is expanded (also if that happens before it was
-    // ever shown).
-    InteractionHintLabel {
-        id: playerBarHint
-        anchors.bottom: playerBar.top
-        width: parent.width
-        z: 101
-        text: qsTr("Tap the station name for station info")
-        property bool shown: false
-        opacity: shown && !playerBar.isHiddenPage ? 1.0 : 0.0
-        visible: opacity > 0
-        Behavior on opacity { FadeAnimation { duration: 400 } }
-
-        MouseArea {
-            anchors.fill: parent
-            onClicked: playerBarHint.dismiss()
+        PlayerBar {
+            id: playerBar
+            anchors.bottom: parent.bottom
+            width: parent.width
+            z: 100
+            // Replaced by the PlayerPanel in landscape
+            visible: !appWindow.landscapeLayout
         }
 
-        function dismiss() {
-            if (shown) {
-                shown = false
-                playerBarHintHideTimer.stop()
-                appSettingsInstance.playerBarHintShown = true
-                // Next one in the chain
-                if (!appSettingsInstance.playerBarExpandHintShown) {
+        PlayerPanel {
+            id: playerPanel
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.right: parent.right
+            width: appWindow.playerPanelFullWidth
+            z: 100
+            barColor: playerBar.color
+            shown: appWindow.landscapeLayout && appWindow.currentStation !== null && !playerBar.isHiddenPage
+        }
+
+        // --- One-time hints above the PlayerBar, one after the other:
+        // 1. the station name opens the station info (the pulley entry for it
+        //    was removed), 2. the arrow expands the bar (recent tracks, sleep
+        //    timer - the moon only exists in the expanded bar).
+        // Each appears 1.5 s after the PlayerBar is there (the second one 1.5 s
+        // after the first is gone), disappears on tap or after 8 s - and never
+        // comes back. The first also goes when the station info is opened, the
+        // second when the bar is expanded (also if that happens before it was
+        // ever shown).
+        InteractionHintLabel {
+            id: playerBarHint
+            anchors.bottom: playerBar.top
+            width: parent.width
+            z: 101
+            text: qsTr("Tap the station name for station info")
+            property bool shown: false
+            opacity: shown && !playerBar.isHiddenPage ? 1.0 : 0.0
+            visible: opacity > 0
+            Behavior on opacity { FadeAnimation { duration: 400 } }
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: playerBarHint.dismiss()
+            }
+
+            function dismiss() {
+                if (shown) {
+                    shown = false
+                    playerBarHintHideTimer.stop()
+                    appSettingsInstance.playerBarHintShown = true
+                    // Next one in the chain
+                    if (!appSettingsInstance.playerBarExpandHintShown) {
+                        playerBarHintTimer.restart()
+                    }
+                }
+            }
+        }
+
+        InteractionHintLabel {
+            id: playerBarExpandHint
+            anchors.bottom: playerBar.top
+            width: parent.width
+            z: 101
+            text: qsTr("Tap the arrow for recent tracks and the sleep timer")
+            property bool shown: false
+            opacity: shown && !playerBar.isHiddenPage ? 1.0 : 0.0
+            visible: opacity > 0
+            Behavior on opacity { FadeAnimation { duration: 400 } }
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: playerBarExpandHint.dismiss()
+            }
+
+            function dismiss() {
+                if (shown) {
+                    shown = false
+                    playerBarExpandHintHideTimer.stop()
+                }
+                appSettingsInstance.playerBarExpandHintShown = true
+            }
+        }
+
+        readonly property bool playerBarHintsPending: !appSettingsInstance.playerBarHintShown
+                                                      || !appSettingsInstance.playerBarExpandHintShown
+
+        Timer {
+            id: playerBarHintTimer
+            interval: 1500
+            onTriggered: {
+                // Never two hints at the same time: wait for the swipe hint
+                if (ringHint.active) {
+                    restart()
+                    return
+                }
+                // The hints point at the PlayerBar - not shown in landscape
+                // (they come later in portrait, the flags stay unset)
+                if (!appWindow.currentStation || playerBar.isHiddenPage || appWindow.landscapeLayout) {
+                    return
+                }
+                if (!appSettingsInstance.playerBarHintShown) {
+                    playerBarHint.shown = true
+                    playerBarHintHideTimer.start()
+                } else if (!appSettingsInstance.playerBarExpandHintShown && !playerBar.expanded) {
+                    playerBarExpandHint.shown = true
+                    playerBarExpandHintHideTimer.start()
+                }
+            }
+        }
+
+        Timer {
+            id: playerBarHintHideTimer
+            interval: 8000
+            onTriggered: playerBarHint.dismiss()
+        }
+
+        Timer {
+            id: playerBarExpandHintHideTimer
+            interval: 8000
+            onTriggered: playerBarExpandHint.dismiss()
+        }
+
+        Connections {
+            target: appWindow
+            onCurrentStationChanged: {
+                if (appWindow.playerBarHintsPending && appWindow.currentStation
+                        && !playerBarHint.shown && !playerBarExpandHint.shown) {
                     playerBarHintTimer.restart()
                 }
             }
         }
-    }
 
-    InteractionHintLabel {
-        id: playerBarExpandHint
-        anchors.bottom: playerBar.top
-        width: parent.width
-        z: 101
-        text: qsTr("Tap the arrow for recent tracks and the sleep timer")
-        property bool shown: false
-        opacity: shown && !playerBar.isHiddenPage ? 1.0 : 0.0
-        visible: opacity > 0
-        Behavior on opacity { FadeAnimation { duration: 400 } }
+        Connections {
+            target: playerBar
+            onExpandedChanged: {
+                if (playerBar.expanded) {
+                    playerBarExpandHint.dismiss()
+                }
+            }
+        }
 
-        MouseArea {
+        // --- One-time hint on the first start: swiping between the ring pages.
+        // Starts 1 s after the start, only on the start page; ends after its
+        // last run or on any page change - and never comes back.
+        RingHint {
+            id: ringHint
             anchors.fill: parent
-            onClicked: playerBarExpandHint.dismiss()
+            anchors.rightMargin: appWindow.playerPanelWidth
+            bottomMargin: appWindow.playerBarHeight
+            z: 101
+            onFinished: appSettingsInstance.ringHintShown = true
         }
 
-        function dismiss() {
-            if (shown) {
-                shown = false
-                playerBarExpandHintHideTimer.stop()
-            }
-            appSettingsInstance.playerBarExpandHintShown = true
-        }
-    }
-
-    readonly property bool playerBarHintsPending: !appSettingsInstance.playerBarHintShown
-                                                  || !appSettingsInstance.playerBarExpandHintShown
-
-    Timer {
-        id: playerBarHintTimer
-        interval: 1500
-        onTriggered: {
-            // Never two hints at the same time: wait for the swipe hint
-            if (ringHint.active) {
-                restart()
-                return
-            }
-            if (!appWindow.currentStation || playerBar.isHiddenPage) {
-                return
-            }
-            if (!appSettingsInstance.playerBarHintShown) {
-                playerBarHint.shown = true
-                playerBarHintHideTimer.start()
-            } else if (!appSettingsInstance.playerBarExpandHintShown && !playerBar.expanded) {
-                playerBarExpandHint.shown = true
-                playerBarExpandHintHideTimer.start()
+        Timer {
+            id: ringHintTimer
+            interval: 1000
+            onTriggered: {
+                if (appSettingsInstance.ringHintShown) return
+                if (pageStack.currentPage === ringTopStationsPage) {
+                    ringHint.start()
+                } else if (pageStack.currentPage && pageStack.currentPage.ringMember) {
+                    // Already swiped by themselves - no hint needed
+                    appSettingsInstance.ringHintShown = true
+                }
             }
         }
-    }
 
-    Timer {
-        id: playerBarHintHideTimer
-        interval: 8000
-        onTriggered: playerBarHint.dismiss()
-    }
-
-    Timer {
-        id: playerBarExpandHintHideTimer
-        interval: 8000
-        onTriggered: playerBarExpandHint.dismiss()
-    }
-
-    Connections {
-        target: appWindow
-        onCurrentStationChanged: {
-            if (appWindow.playerBarHintsPending && appWindow.currentStation
-                    && !playerBarHint.shown && !playerBarExpandHint.shown) {
-                playerBarHintTimer.restart()
-            }
+        Connections {
+            target: pageStack
+            onCurrentPageChanged: ringHint.stop()
         }
-    }
 
-    Connections {
-        target: playerBar
-        onExpandedChanged: {
-            if (playerBar.expanded) {
-                playerBarExpandHint.dismiss()
-            }
+        MessageBanner {
+            id: messageBanner
+            // Centred over the page area (left of the player panel in landscape)
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.horizontalCenterOffset: -appWindow.playerPanelWidth / 2
+            anchors.bottom: appWindow.landscapeLayout ? parent.bottom : playerBar.top
+            anchors.bottomMargin: Theme.paddingLarge
+            z: 101
         }
-    }
-
-    // --- One-time hint on the first start: swiping between the ring pages.
-    // Starts 1 s after the start, only on the start page; ends after its
-    // last run or on any page change - and never comes back.
-    RingHint {
-        id: ringHint
-        anchors.fill: parent
-        bottomMargin: appWindow.playerBarHeight
-        z: 101
-        onFinished: appSettingsInstance.ringHintShown = true
-    }
-
-    Timer {
-        id: ringHintTimer
-        interval: 1000
-        onTriggered: {
-            if (appSettingsInstance.ringHintShown) return
-            if (pageStack.currentPage === ringTopStationsPage) {
-                ringHint.start()
-            } else if (pageStack.currentPage && pageStack.currentPage.ringMember) {
-                // Already swiped by themselves - no hint needed
-                appSettingsInstance.ringHintShown = true
-            }
-        }
-    }
-
-    Connections {
-        target: pageStack
-        onCurrentPageChanged: ringHint.stop()
-    }
-
-    MessageBanner {
-        id: messageBanner
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: playerBar.top
-        anchors.bottomMargin: Theme.paddingLarge
-        z: 101
     }
 }

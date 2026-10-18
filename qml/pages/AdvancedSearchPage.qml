@@ -787,8 +787,10 @@ Page {
     SilicaListView {
         id: listView
         anchors.fill: parent
-        // Ends above the collapsed PlayerBar (see appWindow.playerBarBaseHeight)
+        // Ends above the collapsed PlayerBar (see appWindow.playerBarBaseHeight),
+        // in landscape left of the player panel
         anchors.bottomMargin: appWindow.playerBarBaseHeight
+        anchors.rightMargin: appWindow.playerPanelWidth
 
         currentIndex: -1
 
@@ -1050,7 +1052,7 @@ Page {
         id: searchResultsHint
         anchors.bottom: parent.bottom
         anchors.bottomMargin: appWindow.playerBarHeight
-        width: parent.width
+        width: parent.width - appWindow.playerPanelWidth
         z: 10
         text: qsTr("Search results appear at the bottom of the page")
         property bool shown: false

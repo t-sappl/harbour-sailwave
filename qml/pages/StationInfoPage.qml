@@ -72,6 +72,8 @@ Page {
         // Ends above the collapsed PlayerBar (see appWindow.playerBarBaseHeight);
         // the content only adds room for the expanded part of the bar
         anchors.bottomMargin: appWindow.playerBarBaseHeight
+        // In landscape left of the player panel
+        anchors.rightMargin: appWindow.playerPanelWidth
         contentHeight: contentColumn.height + appWindow.playerBarOverlap + Theme.paddingLarge
 
         PullDownMenu {

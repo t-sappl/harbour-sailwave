@@ -2,14 +2,18 @@
 [Desktop Entry]
 Type=Application
 X-Nemo-Application-Type=silica-qt5
-Icon=harbour-sailwave
-Exec=harbour-sailwave
+Icon=harbour-sailwave-radio
+Exec=harbour-sailwave-radio
 Name=Sailwave
 Name[de]=Sailwave
 # App grid folders are named after common categories
 Categories=AudioVideo;Audio;Player;
 
 [X-Sailjail]
+# Deliberately still harbour-sailwave (the package name up to 1.0.1): the
+# data folders ~/.local/share/<Org>/<App> and ~/.cache/<Org>/<App> follow
+# these names, so favourites, histories and settings are kept after the
+# rename to harbour-sailwave-radio. Never change without a data migration.
 OrganizationName=harbour-sailwave
 ApplicationName=harbour-sailwave
 Permissions=Internet;Audio;Documents;Downloads;Secrets

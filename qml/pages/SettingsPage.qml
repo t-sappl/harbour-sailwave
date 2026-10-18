@@ -21,6 +21,8 @@ Page {
     objectName: "settingsPage"
 
     readonly property var historyOptions: [50, 100, 200]
+    // Values of AppSettings.tileView, in the order of the combo box
+    readonly property var tileViewOptions: ["off", "always", "landscape"]
 
     function countryName(code) {
         var c = CountryData.findCountry(code)
@@ -53,19 +55,49 @@ Page {
             }
 
             TextSwitch {
-                text: qsTr("Loop within favourite group")
-                description: qsTr("Next and Previous media control actions only switch between stations in the current favourite group.")
-                checked: appWindow.appSettings.loopWithinFavGroup
-                automaticCheck: false
-                onClicked: appWindow.appSettings.loopWithinFavGroup = !appWindow.appSettings.loopWithinFavGroup
-            }
-
-            TextSwitch {
                 text: qsTr("Fade out")
                 description: qsTr("Lowers the volume slowly during the last 30 seconds of the sleep timer.")
                 checked: appWindow.appSettings.sleepFadeOut
                 automaticCheck: false
                 onClicked: appWindow.appSettings.sleepFadeOut = !appWindow.appSettings.sleepFadeOut
+            }
+
+            TextSwitch {
+                text: qsTr("Stay within favorite group")
+                description: qsTr("Next and previous (cover, lock screen, headset, car) only switch between the favorites in the playing station's group. When off: through all favorites.")
+                checked: appWindow.appSettings.loopWithinFavGroup
+                automaticCheck: false
+                onClicked: appWindow.appSettings.loopWithinFavGroup = !appWindow.appSettings.loopWithinFavGroup
+            }
+
+            // Favorite tiles (1.1): an extra ring page with large tiles
+            ComboBox {
+                id: tileViewBox
+                label: qsTr("Favorite tiles")
+                description: qsTr("Large tiles of the favorites as an extra page left of the start page, e.g. for the car.")
+                menu: ContextMenu {
+                    MenuItem { text: qsTr("Off") }
+                    MenuItem { text: qsTr("Always") }
+                    MenuItem { text: qsTr("Only in landscape") }
+                }
+                Component.onCompleted: {
+                    var i = settingsPage.tileViewOptions.indexOf(appWindow.appSettings.tileView)
+                    currentIndex = i >= 0 ? i : 0
+                }
+                onCurrentIndexChanged: {
+                    if (currentIndex >= 0) {
+                        appWindow.appSettings.tileView = settingsPage.tileViewOptions[currentIndex]
+                    }
+                }
+            }
+
+            TextSwitch {
+                visible: appWindow.appSettings.tileView !== "off"
+                text: qsTr("Open when turning to landscape")
+                description: qsTr("Shows the favorite tiles as soon as the phone is turned to landscape.")
+                checked: appWindow.appSettings.tileViewAutoOpen
+                automaticCheck: false
+                onClicked: appWindow.appSettings.tileViewAutoOpen = !appWindow.appSettings.tileViewAutoOpen
             }
 
             // ---------------------------------------------------------

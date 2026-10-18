@@ -6,7 +6,7 @@ Manual tests of Sailwave 1.0 on a real device during development. The sections a
 - **Short codes** such as C2, H5, I3 or K3 are internal planning items of that time; what was decided is described in [`DESIGN.md`](DESIGN.md).
 - Earlier results are kept as history in the "Note" column ("was: …", "retest vNN: …"), so a test that failed once and was fixed later can be traced.
 
-Status: 1.0 (development iteration v94) – all functional tests passed (up to section 28); release checks done: packages built for all three architectures, Harbour check passed, memory and QML profiler checked.
+Status: 1.0 (development iteration v94) – all functional tests passed (up to section 28); release checks done: packages built for all three architectures, Harbour check passed, memory and QML profiler checked. Since then: 1.0.1 (section 29, 30); 1.1 (sections 30–33: MPRIS fix, landscape, favorite tiles, package name) – all device tests passed; open only 33.10 (reporting user) and 33.11 (after publishing).
 Tested on: Sailfish OS 5.1, aarch64 (Jolla Phone 2026) · Last test round: 3 October 2026
 
 Legend: `[ ]` open · `[x]` OK · `[!]` failed (note + log excerpt in the "Note" column) · `[?]` unclear / keep watching
@@ -449,17 +449,99 @@ Found with a Hetzner Storage Share (Nextcloud): entering only the server address
 | 29.5 | Server address only, user name empty | "Test connection" fails with a message (no crash); after entering the user name it works | [x] | OK (v98) |
 
 
-## 30. Media player Controls loop through favorite group only (v99)
+## 30. Next/previous favorite on the lock screen, headset and car (1.0.1, retest for 1.0.2 / v100)
 
-new Feature: added Next and Prev control Buttons on the Lockscreen. Control buttons switch beetwen the favourite stations - either within the current favourite group or all favourites (behaviour can be changed with new Setting)
-new Setting: when active the Next and Prev controls of the Media Player Controls on cover page and lockscreen switch only through the current favourite group. When inactive, all stored favorites are used for Next and Prev
-
+1.0.1 added next/previous to MPRIS (lock screen, Bluetooth headset, car) with the setting "Stay within favorite group" (was "Loop within favourite group"): on = the favorites of the playing station's group, off = all favorites in start page order. A user reported that the lock screen and car controls were missing: the module `Amber.Mpris` was not installed on his device, and the package did not pull it in. 1.0.2: `Requires: qml(Amber.Mpris)`; next/previous also work while paused and are only offered when there is another favorite to switch to (same rule as the cover action).
 
 | # | Test | Expected | Result | Note |
 |---|---|---|---|---|
-| 29.1 | Settings: WebDAV URL = only the server address (no path), user name and app password, "Test connection" | "Connection successful" | [x] | OK (v99) |
-| 29.2 | Backup page → WebDAV server (JSON) | File appears in Nextcloud in the folder `Sailwave` of the user's files | [x] | OK (v99) |
-| 29.3 | Full URL as before (`…/remote.php/dav/files/USER/`) | Still works unchanged | [x] | OK (v99) – regression check |
-| 29.4 | Help text under "Backup and sync" and placeholder of the URL field (de/fr/es) | New text "server address is enough", translated | [x] | OK (v99) |
-| 29.5 | Server address only, user name empty | "Test connection" fails with a message (no crash); after entering the user name it works | [x] | OK (v99) |
+| 30.1 | Play a favorite in a group with at least 2 favorites, lock the device | Lock screen shows previous/next; next → next favorite of the group, previous → the one before; wraps around at both ends | [x] | OK (v108) |
+| 30.2 | Setting "Stay within favorite group" off, repeat 30.1 | Next/previous go through all favorites in start page order, across groups | [x] | OK (v108) |
+| 30.3 | Play a station that is not a favorite (e.g. a top station), lock screen next / previous | Next starts the first favorite, previous the last one | [x] | OK (v108) |
+| 30.4 | Pause playback, then next on the lock screen | Switches to the next favorite **and starts playing** (1.0.1: did nothing while paused) | [x] | OK (v108) |
+| 30.5 | Only one favorite and it is playing; and: no favorites at all | Lock screen shows no previous/next buttons; app cover only play/pause | [x] | OK (v108) |
+| 30.6 | Bluetooth headset or car: next/previous buttons | Switch the station like 30.1; title/station shown in the car display | [x] | OK (v108) – keep watching: with Sailcast running, after a pause the headset button starts Sailcast (Sailfish chooses the player); headset "next" sometimes went to the previous favorite (probably the earbud gesture, triple instead of double tap – cover and lock screen are correct) |
+| 30.7 | App cover action "next favorite" | Unchanged: next favorite (group rule as 30.1/30.2) | [x] | OK (v108) – regression check |
+| 30.8 | Settings → Playback: new text below "Fade out", in de/fr/es | "Stay within favorite group" / "Nur innerhalb der Favoritengruppe wechseln" with description | [x] | OK (v108) |
+| 30.8a | Switch the setting off, close the app completely, start again | Still off (1.0.1: was "on" again after every start – the setting was saved but not loaded, missing in `_defs`) | [x] | OK (v108) |
+| 30.9 | Package dependency: `rpm -qR harbour-sailwave-radio \| grep -i mpris` (package name since 1.1; for an RPM file: `rpm -qpR <file> \| grep -i mpris`) | `qml(Amber.Mpris)` | [x] | OK (v108): `qml(Amber.Mpris)` |
+| 30.10 | Device without the module (or after `devel-su pkcon remove` of the package that provides `qml(Amber.Mpris)`): install the 1.0.2 RPM by tapping it / `pkcon install-local` | The module is installed along with the app; Sailwave appears on the lock screen | [x] | OK (v108) – can be done by the user who reported it |
+| 30.11 | Harbour check (`build-release.sh`) for aarch64, armv7hl, i486 | No errors (`qml(Amber.Mpris)` is in Harbour's allowed requires) | [x] | OK (v111): aarch64, armv7hl, i486 built and Harbour check OK (build-release-sailwave.sh with `-c no-fix-version`) |
+| 30.12 | About page | Version 1.1 (was planned as 1.0.2) | [x] | OK (v111) – reported as "31.12 / 33.8", 31.12 was already OK, taken as 30.12 |
+
+
+## 31. Landscape prototype: player panel on the right (v101, for 1.1)
+
+In landscape the PlayerBar is replaced by a player panel on the right (cover, station/song, previous/play/next, heart, sleep timer, latest titles); the pages end left of it. See DESIGN 5a. Test on top of 1.0.2 (section 30).
+
+| # | Test | Expected | Result | Note |
+|---|---|---|---|---|
+| 31.1 | Start page, station playing, turn the phone to landscape | Page rotates; panel on the right with cover, station, song, buttons, latest titles; list ends left of the panel; no PlayerBar at the bottom | [x] | OK (v108) |
+| 31.1a | Turn the phone several times (start page, track history, search, tiles; tiles off / always / only in landscape) | No "Error while modifying page stack … two consecutive entries of the same page instance" in the log; swiping both ways still works afterwards | [x] | OK (v108) – v106: failed on turning; v107: still failed with "only in landscape" (fine with off/always) – v108 |
+| 31.2 | Turn back to portrait | PlayerBar at the bottom as before (collapsed), panel gone, lists full width | [x] | OK (v108) |
+| 31.3 | Swipe between start page, track history and advanced search in landscape | Ring swiping works; the panel stays in place on the right | [x] | OK (v108) |
+| 31.4 | Panel: play/pause, previous, next | Works like on the cover/lock screen; previous/next dimmed without another favorite | [x] | OK (v108) |
+| 31.5 | Panel: tap cover or station name | Station info opens (left of the panel) | [x] | OK (v108) |
+| 31.6 | Panel: heart | Adds/removes the favorite; start page updates | [x] | OK (v108) |
+| 31.7 | Panel: moon → duration; ✕ while running | Sleep timer starts / stops; moon badge on the cover | [x] | OK (v108) |
+| 31.8 | Panel: latest titles, "Open track history" | Titles of the station; opens the track history at that station | [x] | OK (v108) |
+| 31.9 | Album cover appears / disappears | Cover fills the box, logo as badge bottom right; logo grows back when the cover goes | [x] | OK (v108) |
+| 31.10 | Open settings / manage favorites in landscape | Panel slides out, the page uses the full width; back → panel slides in | [x] | OK (v108) |
+| 31.11 | Station info in landscape (long content, similar stations) | Scrolls fully; nothing hidden behind the panel; pulley menu works | [x] | OK (v108) |
+| 31.12 | Advanced search in landscape: open a filter, type with the keyboard | Filter field and chips usable; results reachable | [x] | OK (v108) – little height with the keyboard |
+| 31.13 | Context menu on a station near the bottom (landscape) | Menu fully visible | [x] | OK (v108) |
+| 31.14 | Message banner (e.g. station not reachable) in landscape | At the bottom, centred over the page area, upright | [x] | OK (v108) |
+| 31.15 | Dialogs in landscape (group name, homepage, restore confirmation, file picker) | Rotate and work | [x] | OK (v108) |
+| 31.16 | Turn the phone while a dialog / the sleep durations are open | No crash, state kept | [x] | OK (v108) |
+| 31.17 | No station selected yet, landscape | No panel, pages full width | [x] | OK (v108) |
+| 31.18 | App cover and lock screen while in landscape | Unchanged | [x] | OK (v108) – regression check |
+| 31.19 | Camera cutout in landscape (left/right) | Nothing important covered (note what is) | [x] | OK (v108) |
+| 31.20 | Car use (if possible): readability and button size of the panel | Note impressions | [x] | OK (v108) – for the decision on idea A |
+
+
+## 32. Favorite tiles (v102, for 1.1)
+
+Large favorite tiles as a fourth ring page left of the start page; setting "Favorite tiles" (Off / Always / Only in landscape) and "Open when turning to landscape". See DESIGN 5b.
+
+| # | Test | Expected | Result | Note |
+|---|---|---|---|---|
+| 32.1 | Settings → Playback: "Favorite tiles" = Off (default) | Ring as before (3 pages); switch "Open when turning to landscape" hidden | [x] | OK (v108) |
+| 32.2 | "Always", portrait: swipe right from the start page | Tile page; swiping on: search ← tiles ← start page, and tiles → start page | [x] | OK (v108) |
+| 32.3 | Tile page: favorites with groups | Heading per group in start page order, "Other favorites" last; without groups no headings | [x] | OK (v108) – looks good |
+| 32.4 | Tap a tile | Station plays; tile highlighted; PlayerBar (portrait) / panel (landscape) shows it | [x] | OK (v108) |
+| 32.5 | Press and hold a tile → "Station info" | Station info opens | [x] | OK (v108) |
+| 32.6 | Tile page in landscape | About 4 tiles per row left of the player panel; nothing hidden behind the panel | [x] | OK (v108) |
+| 32.7 | "Only in landscape": portrait | No tile page in the ring | [x] | OK (v108) |
+| 32.8 | "Only in landscape": turn to landscape, swipe right from the start page | Tile page is there | [x] | OK (v108) |
+| 32.9 | "Only in landscape": on the tile page, turn back to portrait | Start page is shown (tiles leave the ring) | [x] | OK (v108) – reported as "32.8 works too" after 32.8 was already OK, taken as 32.9 |
+| 32.10 | "Open when turning to landscape" on: start page / track history in portrait, turn the phone | Tile page opens by itself | [x] | OK (v108) |
+| 32.11 | Same, but a station info or the settings are open | Stays on that page | [x] | OK (v108) |
+| 32.12 | Switch off "Open when turning …", turn the phone | Stays on the current page | [x] | OK (v108) |
+| 32.13 | Change favorites (add a heart on another page, delete/move on the favorites page) | Tile page updates | [x] | OK (v108) |
+| 32.14 | No favorites, tile page | Placeholder "No favorites yet" with the hint | [x] | OK (v108) |
+| 32.15 | Unreachable favorite | Tile dimmed | [x] | OK (v108) |
+| 32.16 | Settings kept after a restart (tile view, open when turning) | Values as set | [x] | OK (v108) |
+| 32.17 | Change "Favorite tiles" from Always to Off while the tile page is in the stack below the settings, go back | Start page shown, ring with 3 pages | [x] | OK (v108) |
+| 32.18 | Translations de/fr/es of the new texts | Translated, no direct address in German | [x] | OK (v108) |
+| 32.19 | Car: tiles + panel, readability and touch size | Note impressions | [x] | OK (v108) – tried, works |
+
+
+## 33. Package name harbour-sailwave-radio and moving over (v103, 1.1)
+
+Since 1.1 the package is `harbour-sailwave-radio`; a transitional `harbour-sailwave` 1.1 (OpenRepos only, `migration/`) brings OpenRepos users over. Data folders unchanged (Org/App `harbour-sailwave`). See DESIGN 10b. **Before testing: back up the favorites** (backup page → this device) – the automatic file in Documents/Sailwave is a second safety net.
+
+| # | Test | Expected | Result | Note |
+|---|---|---|---|---|
+| 33.1 | `build-release.sh` | Builds `harbour-sailwave-radio-1.1-1.<arch>.rpm` for all three architectures; Harbour check OK | [x] | OK (v111): aarch64, armv7hl, i486 built and Harbour check OK (build-release-sailwave.sh with `-c no-fix-version`) – only one .spec in rpm/ |
+| 33.2 | Build the transitional package in `migration/` | `harbour-sailwave-1.1-1.noarch.rpm`; `rpm -qpR` shows `harbour-sailwave-radio`; `rpm -qpl` only the README | [x] | OK (v111) |
+| 33.3 | Phone with the old app (1.0.1 from OpenRepos/RPM): install `harbour-sailwave-radio` 1.1 | Second icon "Sailwave"; first start asks for the permissions; favorites, groups, histories, settings all there | [x] | OK (v111) – same data folders |
+| 33.4 | Then install the transitional package (`pkcon install-local …noarch.rpm`) | The old app (icon) disappears, the new one stays; data still there | [x] | OK (v111) – installed together with harbour-sailwave-radio (see 33.5); alone, pkcon reported "nothing provides harbour-sailwave-radio" because the radio package had been deployed by Qt Creator with rpm directly (not known to PackageKit) – not an issue with packages from a repository |
+| 33.5 | Old setup again, this time `pkcon install-local` with **both** RPMs at once (radio + transitional) | Same result as 33.3 + 33.4 in one step | [x] | OK (v111) – `pkcon install-local` with both RPMs: old app removed, new one stays, data kept – simulates the Storeman update |
+| 33.6 | WebDAV password after the move | Still there – or the settings show the hint and it must be entered once (note which) | [x] | OK (v111) – password still there after the move (answer "yes") – Sailfish Secrets may tie it to the app |
+| 33.7 | Lock screen: icon and controls | Sailwave icon shown (desktopEntry harbour-sailwave-radio), previous/play/next work | [x] | OK (v111) |
+| 33.8 | About page | Icon shown, version 1.1 | [x] | OK (v111) |
+| 33.9 | Translations | App in German/French/Spanish as before (renamed .ts files) | [x] | OK (v111) |
+| 33.10 | Device without the module: install by tapping the RPM; `rpm -qR harbour-sailwave-radio \| grep -i mpris` | `qml(Amber.Mpris)` installed along with it; lock screen controls work | [ ] | the reporting user |
+| 33.12 | New icon (v104): app grid, app cover, lock screen, about page, in a dark and a light ambience | Icon with depth, sharp at every size, no dark edge on light backgrounds | [x] | OK (v111) |
+| 33.11 | After publishing: Storeman on a phone with the old Sailwave from OpenRepos | Update offered; afterwards the new app installed, data kept | [ ] | after release |
 

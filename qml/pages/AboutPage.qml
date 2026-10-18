@@ -33,7 +33,7 @@ Page {
             // if it is missing, the space simply collapses
             Image {
                 anchors.horizontalCenter: parent.horizontalCenter
-                source: "/usr/share/icons/hicolor/172x172/apps/harbour-sailwave.png"
+                source: "/usr/share/icons/hicolor/172x172/apps/harbour-sailwave-radio.png"
                 width: Theme.iconSizeExtraLarge
                 height: width
                 sourceSize.width: width

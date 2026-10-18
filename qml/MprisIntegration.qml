@@ -4,8 +4,8 @@ import Amber.Mpris 1.0
 
 // Registers the app as an MPRIS player (org.mpris.MediaPlayer2.*) so that
 // Sailfish OS shows it on the lock screen, in the multitasking view and
-// for Bluetooth/headset controls with station/title and play/pause -
-// just like the built-in music apps. Sailfish automatically detects when
+// for Bluetooth/headset/car controls with station/title, play/pause and
+// next/previous favourite - just like the built-in music apps. Sailfish automatically detects when
 // a player has the status "Paused" and then shows it as the "recently
 // used media app" with a play button, even when nothing is playing.
 // Docs: https://sailfishos.org/develop/docs/amber-qml-plugin-mpris/
@@ -19,15 +19,21 @@ MprisPlayer {
     id: mprisPlayer
 
     // serviceName becomes "org.mpris.MediaPlayer2.harbour-sailwave" on D-Bus
+    // (kept after the package rename - it matches the Sailjail application
+    // name harbour-sailwave)
     serviceName: "harbour-sailwave"
     identity: "Sailwave"
-    desktopEntry: "harbour-sailwave"
+    // Name of the .desktop file (package name since 1.1) - the lock screen
+    // takes the icon from it
+    desktopEntry: "harbour-sailwave-radio"
 
     canControl: true
     canPlay: appWindow.currentStation !== null
     canPause: appWindow.currentStation !== null
-    canGoNext: true
-    canGoPrevious: true
+    // Only when there is another favourite to switch to (same rule as the
+    // cover action), so the lock screen does not show dead buttons
+    canGoNext: appWindow.canPlayNextFavorite
+    canGoPrevious: appWindow.canPlayNextFavorite
     canSeek: false
     canQuit: false
     canRaise: false
@@ -62,17 +68,10 @@ MprisPlayer {
             appWindow.togglePlayback()
         }
     }
-    onNextRequested: {
-        if (appWindow.isPlaying) {
-            appWindow.playNextFavorite()
-        }
-    }
-    onPreviousRequested: {
-        if (appWindow.isPlaying) {
-            appWindow.playPrevFavorite()
-        }
-    }
-
+    // Next/previous favourite (headset, lock screen, car) - also while
+    // paused: switching then starts the new station, like the cover action
+    onNextRequested: appWindow.playNextFavorite()
+    onPreviousRequested: appWindow.playPrevFavorite()
     onPlayPauseRequested: appWindow.togglePlayback()
     onStopRequested: appWindow.stopPlayback()
 }

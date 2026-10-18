@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="icons/172x172/harbour-sailwave.png" width="120" alt="Sailwave icon">
+  <img src="icons/172x172/harbour-sailwave-radio.png" width="120" alt="Sailwave icon">
 </p>
 
 # Sailwave
@@ -26,11 +26,13 @@ More: [app cover](screenshots/cover.png) · [lock screen](screenshots/lock-scree
 - **Backup and sync** – automatic JSON backup in `Documents/Sailwave` with the last five states; manual backups with date and time (JSON or M3U playlist) on the device, shared via the system's share menu or on a WebDAV server (e.g. Nextcloud); restore from any of them (replace or add missing); optional automatic sync via WebDAV with conflict handling
 - **Track history** – grouped by station, searchable, with album covers, album and genre from the iTunes Search API (optional)
 - **Station info** – details, votes and clicks, homepage correction, similar stations (by tags, or by the genres a station plays)
-- **Player** – global player bar with sleep timer (fade out), app cover with actions (play/pause, next favorite in the same group), lock screen / MPRIS with cover art
+- **Player** – global player bar with sleep timer (fade out), app cover with actions (play/pause, next favorite in the same group), lock screen / MPRIS with cover art and next/previous favorite (also from a headset or car)
 - **Sailfish native** – Silica components, adaptive colors following the ambience, pulley menus, remorse countdowns for every delete action
 - **Languages** – English, German, French, Spanish
 
 ## Installation
+The package is called `harbour-sailwave-radio` since version 1.1 (up to 1.0.1: `harbour-sailwave`). Installed from OpenRepos, the old package updates to the new one by itself; favorites and settings are kept.
+
 Planned:
 - **Chum** 
 - **OpenRepos**
@@ -65,14 +67,14 @@ Album covers and station logos are cached on the device; "Clear cache" in the se
 
 Requirements: [Sailfish SDK](https://docs.sailfishos.org/Tools/Sailfish_SDK/) with Qt Creator.
 
-1. Open `harbour-sailwave.pro` in Qt Creator.
+1. Open `harbour-sailwave-radio.pro` in Qt Creator.
 2. Choose a Sailfish OS build target (e.g. aarch64 or armv7hl).
 3. Build and deploy as RPM to a device or the emulator.
 
 Notes:
 - After adding or changing C++ classes, run "Clean" and qmake.
 - Starting the app from Qt Creator bypasses Sailjail; for sandbox tests start it from the app grid.
-- Optional runtime dependency for lock screen controls: `amber-mpris` (the app runs without it).
+- Runtime dependency for lock screen, headset and car controls: `qml(Amber.Mpris)` (installed with the package; the app would also run without it).
 
 ## Project documents
 
