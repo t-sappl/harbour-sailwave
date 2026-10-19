@@ -16,7 +16,7 @@
   <img src="screenshots/settings.png" width="19%" alt="Settings">
 </p>
 
-More: [app cover](screenshots/cover.png) · [lock screen](screenshots/lock-screen.png) · [restoring a backup](screenshots/backup.png)
+More: [app cover](screenshots/cover.png) · [lock screen](screenshots/lock-screen.png) · [restoring a backup](screenshots/backup.png)· [landscape mode with favorite tiles](screenshots/landscape-tiles.png)
 
 ## Features
 
