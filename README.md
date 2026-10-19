@@ -16,7 +16,7 @@
   <img src="screenshots/settings.png" width="19%" alt="Settings">
 </p>
 
-More: [app cover](screenshots/cover.png) · [lock screen](screenshots/lock-screen.png) · [restoring a backup](screenshots/backup.png)· [landscape mode with favorite tiles](screenshots/landscape-tiles.png)
+More: [app cover](screenshots/cover.png) · [lock screen](screenshots/lock-screen.png) · [restoring a backup](screenshots/backup.png) · [landscape mode with favorite tiles](screenshots/landscape-tiles.png)
 
 ## Features
 
@@ -26,6 +26,7 @@ More: [app cover](screenshots/cover.png) · [lock screen](screenshots/lock-scree
 - **Backup and sync** – automatic JSON backup in `Documents/Sailwave` with the last five states; manual backups with date and time (JSON or M3U playlist) on the device, shared via the system's share menu or on a WebDAV server (e.g. Nextcloud); restore from any of them (replace or add missing); optional automatic sync via WebDAV with conflict handling
 - **Track history** – grouped by station, searchable, with album covers, album and genre from the iTunes Search API (optional)
 - **Station info** – details, votes and clicks, homepage correction, similar stations (by tags, or by the genres a station plays)
+- **Landscape and car** – in landscape the player moves into a panel on the right with large previous/play/next buttons; optional favorite tiles with large station logos (always, or only in landscape)
 - **Player** – global player bar with sleep timer (fade out), app cover with actions (play/pause, next favorite in the same group), lock screen / MPRIS with cover art and next/previous favorite (also from a headset or car)
 - **Sailfish native** – Silica components, adaptive colors following the ambience, pulley menus, remorse countdowns for every delete action
 - **Languages** – English, German, French, Spanish
@@ -33,8 +34,7 @@ More: [app cover](screenshots/cover.png) · [lock screen](screenshots/lock-scree
 ## Installation
 The package is called `harbour-sailwave-radio` since version 1.1 (up to 1.0.1: `harbour-sailwave`). Installed from OpenRepos, the old package updates to the new one by itself; favorites and settings are kept.
 
-- **OpenRepos**
-[https://openrepos.net/content/tsappl/sailwave]
+- **OpenRepos**: [Sailwave on OpenRepos](https://openrepos.net/content/tsappl/sailwave)
 
 Planned:
 - **Jolla Store**
@@ -79,7 +79,7 @@ Notes:
 
 ## Project documents
 
-- [`TODO.md`](TODO.md) – roadmap up to version 1.0 and beyond
+- [`TODO.md`](TODO.md) – roadmap and known issues
 - [`DESIGN.md`](DESIGN.md) – architecture, conventions and design decisions, including what was tried and rejected
 - [`TEST-PROTOCOL.md`](TEST-PROTOCOL.md) – manual test protocol on a real device
 
