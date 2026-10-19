@@ -33,9 +33,10 @@ More: [app cover](screenshots/cover.png) · [lock screen](screenshots/lock-scree
 ## Installation
 The package is called `harbour-sailwave-radio` since version 1.1 (up to 1.0.1: `harbour-sailwave`). Installed from OpenRepos, the old package updates to the new one by itself; favorites and settings are kept.
 
-Planned:
-- **Chum** 
 - **OpenRepos**
+[https://openrepos.net/content/tsappl/sailwave] (https://openrepos.net/content/tsappl/sailwave)
+
+Planned:
 - **Jolla Store**
 
 ## Permissions
