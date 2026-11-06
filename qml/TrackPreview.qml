@@ -24,7 +24,13 @@ Column {
 
     width: parent ? parent.width : 0
 
-    readonly property real rowHeight: Theme.itemSizeSmall
+    // Grows with the text (large system font), never below itemSizeSmall.
+    // Measured with the same fonts as the two labels of a row.
+    readonly property real rowHeight: Math.max(Theme.itemSizeSmall,
+                                               titleMetrics.height + detailMetrics.height + 2 * Theme.paddingSmall)
+
+    FontMetrics { id: titleMetrics; font.pixelSize: Theme.fontSizeSmall }
+    FontMetrics { id: detailMetrics; font.pixelSize: Theme.fontSizeExtraSmall }
 
     SilicaListView {
         id: listView
@@ -74,7 +80,7 @@ Column {
     BackgroundItem {
         id: openItem
         width: parent.width
-        height: Theme.itemSizeSmall
+        height: Math.max(Theme.itemSizeSmall, openLabel.height + 2 * Theme.paddingMedium)
         onClicked: preview.openClicked()
 
         Image {
@@ -88,6 +94,7 @@ Column {
             source: "image://theme/icon-m-history?" + (openItem.highlighted ? Theme.highlightColor : Theme.primaryColor)
         }
         Label {
+            id: openLabel
             anchors.left: openIcon.right
             anchors.leftMargin: Theme.paddingMedium
             anchors.right: parent.right

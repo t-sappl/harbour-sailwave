@@ -191,11 +191,12 @@ Page {
             BackgroundItem {
                 id: doneItem
                 width: parent.width
-                height: Theme.itemSizeSmall
+                height: Math.max(Theme.itemSizeSmall, doneLabel.height + 2 * Theme.paddingMedium)
                 visible: page.sortMode
                 onClicked: page.sortMode = false
 
                 Label {
+                    id: doneLabel
                     anchors.right: parent.right
                     anchors.rightMargin: Theme.horizontalPageMargin
                     anchors.verticalCenter: parent.verticalCenter
@@ -308,7 +309,8 @@ Page {
                 BackgroundItem {
                     id: headerItem
                     width: parent.width
-                    height: Theme.itemSizeSmall
+                    // Grows with the heading (large system font)
+                    height: Math.max(Theme.itemSizeSmall, sectionTitle.height + Theme.paddingSmall)
                     visible: model.isHeader === true
                     // While sorting, all favourite groups are shown expanded and
                     // their headers cannot be collapsed (they are drop targets)
@@ -332,6 +334,7 @@ Page {
                         spacing: Theme.paddingMedium
 
                         SectionHeader {
+                            id: sectionTitle
                             text: model.headerTitle || ""
                             anchors.verticalCenter: parent.verticalCenter
                             width: parent.width - (collapsibleIcon.visible ? collapsibleIcon.width : 0)

@@ -7,7 +7,8 @@ import "CountryData.js" as CountryData
 
 ListItem {
     id: delegateItem
-    contentHeight: Theme.itemSizeMedium
+    // Grows with the text (large system font), never smaller than before
+    contentHeight: Math.max(Theme.itemSizeMedium, textColumn.height + 2 * Theme.paddingMedium)
 
     // true in the "Similar stations" of an info page: the (i) button then
     // replaces that info page instead of stacking a new one on top
@@ -34,6 +35,7 @@ ListItem {
     }
 
     Column {
+        id: textColumn
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: stationIcon.right
         anchors.right: infoButton.left

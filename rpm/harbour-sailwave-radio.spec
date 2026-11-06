@@ -5,7 +5,7 @@
 Name:       harbour-sailwave-radio
 
 Summary:    Internet radio player for Sailfish OS
-Version:    1.1
+Version:    1.1.1
 Release:    1
 License:    GPL-3.0-or-later
 URL:        https://github.com/t-sappl/harbour-sailwave/
@@ -92,6 +92,13 @@ desktop-file-install --delete-original \
 %{_datadir}/icons/hicolor/*/apps/%{name}.png
 
 %changelog
+* Wed Nov 04 2026 Thomas Sappl <thomas.sappl@gmail.com> - 1.1.1-1
+- Fix: rows, headings, the player bar and the favorite tiles now grow with
+  the system font size (no more overlapping text with a large font).
+- Advanced search: long filter selections start at the left and fade out.
+- Refined app icon with more depth.
+- English plural forms ("1 favorite", "2 favorites").
+
 * Fri Oct 16 2026 Thomas Sappl <thomas.sappl@gmail.com> - 1.1-1
 - New package name harbour-sailwave-radio (harbour-sailwave was taken).
   Favorites, histories and settings are kept; OpenRepos users get the new

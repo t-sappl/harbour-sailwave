@@ -272,32 +272,6 @@
     </message>
 </context>
 <context>
-    <name>FavoritesBackup</name>
-    <message>
-        <source>WebDAV sign-in failed</source>
-        <translation>WebDAV-Anmeldung fehlgeschlagen</translation>
-    </message>
-    <message>
-        <source>Favorites could not be synced, trying again later</source>
-        <translation>Favoriten konnten nicht abgeglichen werden, neuer Versuch später</translation>
-    </message>
-    <message>
-        <source>Favorites are up to date</source>
-        <translation>Favoriten sind aktuell</translation>
-    </message>
-    <message>
-        <source>The file on the server is not a Sailwave favorites file</source>
-        <translation>Die Datei auf dem Server ist keine Sailwave-Favoritendatei</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n favorite(s) added from the server</source>
-        <translation>
-            <numerusform>%n Favorit vom Server ergänzt</numerusform>
-            <numerusform>%n Favoriten vom Server ergänzt</numerusform>
-        </translation>
-    </message>
-</context>
-<context>
     <name>FavoriteTilesPage</name>
     <message>
         <source>Other favorites</source>
@@ -326,6 +300,32 @@
     <message>
         <source>Tap the heart next to a station to add it to your favorites.</source>
         <translation>Das Herz neben einem Sender antippen, um ihn zu den Favoriten hinzuzufügen.</translation>
+    </message>
+</context>
+<context>
+    <name>FavoritesBackup</name>
+    <message>
+        <source>WebDAV sign-in failed</source>
+        <translation>WebDAV-Anmeldung fehlgeschlagen</translation>
+    </message>
+    <message>
+        <source>Favorites could not be synced, trying again later</source>
+        <translation>Favoriten konnten nicht abgeglichen werden, neuer Versuch später</translation>
+    </message>
+    <message>
+        <source>Favorites are up to date</source>
+        <translation>Favoriten sind aktuell</translation>
+    </message>
+    <message>
+        <source>The file on the server is not a Sailwave favorites file</source>
+        <translation>Die Datei auf dem Server ist keine Sailwave-Favoritendatei</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n favorite(s) added from the server</source>
+        <translation>
+            <numerusform>%n Favorit vom Server ergänzt</numerusform>
+            <numerusform>%n Favoriten vom Server ergänzt</numerusform>
+        </translation>
     </message>
 </context>
 <context>

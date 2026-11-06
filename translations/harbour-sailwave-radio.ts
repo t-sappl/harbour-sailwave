@@ -272,31 +272,6 @@
     </message>
 </context>
 <context>
-    <name>FavoritesBackup</name>
-    <message>
-        <source>WebDAV sign-in failed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Favorites could not be synced, trying again later</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Favorites are up to date</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The file on the server is not a Sailwave favorites file</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>%n favorite(s) added from the server</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
-    </message>
-</context>
-<context>
     <name>FavoriteTilesPage</name>
     <message>
         <source>Other favorites</source>
@@ -325,6 +300,31 @@
     <message>
         <source>Tap the heart next to a station to add it to your favorites.</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>FavoritesBackup</name>
+    <message>
+        <source>WebDAV sign-in failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Favorites could not be synced, trying again later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Favorites are up to date</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file on the server is not a Sailwave favorites file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n favorite(s) added from the server</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>

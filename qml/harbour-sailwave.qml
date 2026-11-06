@@ -72,7 +72,7 @@ ApplicationWindow {
 
     // App version number (for "About Sailwave" and the User-Agent).
     // Bump it with every release, together with the version in the .spec/.yaml.
-    readonly property string appVersion: "1.1"
+    readonly property string appVersion: "1.1.1"
 
     // radio-browser.info API etiquette: our own User-Agent instead of the Qt default
     property string apiUserAgent: "harbour-sailwave/" + appVersion

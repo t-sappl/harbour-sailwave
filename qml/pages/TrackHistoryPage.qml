@@ -246,7 +246,8 @@ Page {
             BackgroundItem {
                 id: headerItem
                 width: parent.width
-                height: Theme.itemSizeSmall
+                // Grows with the heading (large system font)
+                height: Math.max(Theme.itemSizeSmall, stationTitle.height + Theme.paddingSmall)
                 visible: model.isHeader === true
 
                 onClicked: trackHistoryPage.toggleStation(model.stationKey)
@@ -268,6 +269,7 @@ Page {
                     }
 
                     SectionHeader {
+                        id: stationTitle
                         // Display only: stationName stays the stored key
                         text: RadioApi.cleanName(model.stationName) || qsTr("Unknown station")
                         anchors.verticalCenter: parent.verticalCenter

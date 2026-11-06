@@ -279,7 +279,10 @@ Page {
         delegate: ListItem {
             id: item
             width: listView.width
-            contentHeight: model.isHeader ? Theme.itemSizeSmall : Theme.itemSizeMedium
+            // Grows with the text (large system font), never smaller than the fixed sizes
+            contentHeight: model.isHeader
+                           ? Math.max(Theme.itemSizeSmall, headerLabel.height + 2 * Theme.paddingMedium)
+                           : Math.max(Theme.itemSizeMedium, favoriteColumn.height + 2 * Theme.paddingMedium)
             // No context menu while selecting or for "Other favorites"
             menu: page.selecting ? null
                   : model.isHeader ? (model.groupId > 0 ? groupMenu : null)
@@ -316,6 +319,7 @@ Page {
                 anchors.fill: parent
 
                 Label {
+                    id: headerLabel
                     anchors.left: parent.left
                     anchors.leftMargin: item.selectable ? Theme.horizontalPageMargin + selectMark.width + Theme.paddingMedium
                                                         : Theme.horizontalPageMargin
@@ -356,6 +360,7 @@ Page {
                 }
 
                 Column {
+                    id: favoriteColumn
                     anchors.left: icon.right
                     anchors.leftMargin: Theme.paddingMedium
                     anchors.right: handle.left

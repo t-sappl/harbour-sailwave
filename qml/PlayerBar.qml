@@ -176,7 +176,11 @@ Rectangle {
     readonly property var sleepOptions: [5, 10, 15, 30, 45, 60, 90]
 
     // Height of the collapsed bar (the sleep row only exists while expanded)
-    readonly property real collapsedHeight: Theme.itemSizeLarge
+    // Grows with the text (large system font): station name + title line
+    // (same fonts as the labels in the bar), never below itemSizeLarge
+    readonly property real collapsedHeight: Math.max(Theme.itemSizeLarge,
+        nameMetrics.height + Theme.fontSizeTiny + Theme.paddingSmall / 2 + 2 * Theme.paddingMedium)
+    FontMetrics { id: nameMetrics; font.pixelSize: Theme.fontSizeSmall; font.bold: true }
 
     height: {
         var sleep = sleepSelectorOpen ? sleepRowHeight : 0
@@ -308,7 +312,7 @@ Rectangle {
     Item {
         id: mainBar
         width: parent.width
-        height: Theme.itemSizeLarge
+        height: playerBar.collapsedHeight
         anchors.top: sleepRow.bottom
 
         Row {

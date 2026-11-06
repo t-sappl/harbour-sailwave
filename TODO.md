@@ -2,13 +2,20 @@
 
 Open items and plans. Architecture and design decisions are in [`DESIGN.md`](DESIGN.md), tests in [`TEST-PROTOCOL.md`](TEST-PROTOCOL.md).
 
-## Version 1.1 – tested, ready for release
+## Version 1.1 – released (October 2026)
 
 - [x] **Package name `harbour-sailwave-radio`** with a transitional `harbour-sailwave` for OpenRepos users (see DESIGN 10b)
-- [ ] **Screenshot** `landscape-tiles.png` (tiles + player panel in landscape) for README, Jolla Store, OpenRepos
+- [x] **Screenshot** `landscape-tiles.png` (tiles + player panel in landscape) for README, Jolla Store, OpenRepos
 - [x] **Lock screen / car controls:** `Requires: qml(Amber.Mpris)`, next/previous also while paused
 - [x] **Landscape:** support landscape on all pages (1.0 is portrait only; requested by users, e.g. for use in the car) – player panel on the right (see DESIGN 5a), tested
 - [x] **Favorite tiles:** large favourite tiles as an extra ring page, setting off / always / only in landscape + open when turning (see DESIGN 5b), tested
+
+## Version 1.1.1 – bugfix (November 2026, tested, ready to publish)
+
+- [x] **Large system font:** rows, headings, the player bar and the favorite tiles grow with the font size (forum report: overlapping rows with a large font) – see DESIGN 10c
+- [x] **Advanced search:** long filter values (genres, countries) start at the left and fade out instead of losing their beginning
+- [x] **App icon:** more depth, no rim (see DESIGN 10)
+- [x] **English plural forms:** new `translations/harbour-sailwave-radio-en.ts` ("1 favorite / 2 favorites"); the other languages already had them since 1.0
 
 ## Version 1.2 – planned
 
@@ -16,7 +23,6 @@ Open items and plans. Architecture and design decisions are in [`DESIGN.md`](DES
 - [ ] **Advanced search:** review the search logic based on experience – how genre, language and country filters are combined, "All genres/languages must match", sorting of the results
 - [ ] **Corrections to radio-browser.info:** send station data corrections (e.g. homepage, logo) to radio-browser.info – first find out why Shortwave removed this feature again and whether there are solutions (confirmation before sending, plausibility checks of the data, …)
 - [ ] **Start page – station history with favourites:** since 1.0 the station history also lists favourites (a favourite can appear in its group and in the history at the same time) – review after some use whether this duplication is useful or should be limited
-- [ ] **Plural forms:** texts like "4 favorite(s) · 3 group(s)" with proper plurals via `qsTr("%n favorite(s)", "", count)` and numerus forms in the .ts files ("1 favorite / 4 favorites", "1 Favorit / 4 Favoriten", …) – needs an English .ts file with the plural forms too; about 16 texts
 - [ ] **Performance** (QML profiler 1.0, test 21.6 – nothing blocks noticeably, but these are the largest items):
   - create the track history and advanced search pages only on the first swipe – about 210 ms less compiling at start-up (AdvancedSearchPage 124 ms, TrackHistoryPage 44 ms, AdvancedSearchFilter 44 ms)
   - top-station scoring runs 3 times around start-up at 44–76 ms each: compute the IDF and the tag arrays once per station pool, avoid the extra run triggered by `onOrderFrozenChanged`

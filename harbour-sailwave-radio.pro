@@ -6,6 +6,7 @@ TARGET = harbour-sailwave-radio
 
 CONFIG += sailfishapp sailfishapp_i18n
 TRANSLATIONS += \
+    translations/harbour-sailwave-radio-en.ts \
     translations/harbour-sailwave-radio-de.ts \
     translations/harbour-sailwave-radio-fr.ts \
     translations/harbour-sailwave-radio-es.ts

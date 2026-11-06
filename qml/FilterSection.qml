@@ -40,7 +40,8 @@ Column {
     BackgroundItem {
         id: headerItem
         width: parent.width
-        height: Theme.itemSizeSmall
+        // Grows with the text (large system font)
+        height: Math.max(Theme.itemSizeSmall, titleLabel.height + 2 * Theme.paddingMedium)
         onClicked: section.clicked()
 
         Label {
@@ -58,7 +59,10 @@ Column {
             anchors.right: section.clearable ? clearButton.left : arrow.left
             anchors.rightMargin: section.clearable ? 0 : Theme.paddingSmall
             anchors.verticalCenter: parent.verticalCenter
-            horizontalAlignment: Text.AlignRight
+            // Short values right-aligned; a value that does not fit starts at
+            // the left and fades out at the end, so the first entries stay
+            // readable (right-aligned it lost its beginning)
+            horizontalAlignment: implicitWidth > width ? Text.AlignLeft : Text.AlignRight
             truncationMode: TruncationMode.Fade
             text: section.value
             color: Theme.highlightColor

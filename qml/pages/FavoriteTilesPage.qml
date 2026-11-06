@@ -78,6 +78,12 @@ Page {
     // more on tablets
     readonly property int columns: Math.max(2, Math.floor(areaWidth / (Screen.width / 3.3)))
     readonly property real tileSize: Math.floor(areaWidth / columns)
+    // Tile height: square as before, but taller if a large system font needs
+    // more room for the (up to two line) name under the logo - the same for
+    // all tiles, so the rows stay even
+    FontMetrics { id: nameMetrics; font.pixelSize: Theme.fontSizeSmall; font.bold: true }
+    readonly property real tileHeight: Math.max(tileSize,
+        Math.round(tileSize * 0.62) + Theme.paddingSmall + 2 * nameMetrics.height + 2 * Theme.paddingSmall)
 
     SilicaFlickable {
         id: flickable
@@ -127,7 +133,7 @@ Page {
                             ListItem {
                                 id: tile
                                 width: page.tileSize
-                                contentHeight: page.tileSize
+                                contentHeight: page.tileHeight
 
                                 readonly property var fav: modelData
                                 readonly property bool playing: appWindow.currentStation
