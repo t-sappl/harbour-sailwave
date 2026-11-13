@@ -112,6 +112,8 @@ Page {
                 title: qsTr("Favorites")
             }
 
+            RingNeighbours { ringPage: page }
+
             Repeater {
                 model: page.sections
 

@@ -23,7 +23,7 @@ Page {
         Column {
             id: column
             width: parent.width
-            spacing: Theme.paddingMedium
+            spacing: Theme.paddingLarge
 
             PageHeader {
                 title: qsTr("About Sailwave")
@@ -40,11 +40,11 @@ Page {
                 sourceSize.height: height
                 visible: status === Image.Ready
 
-                // Hidden: press and hold shows all one-time hints again
-                // (for testing)
+                // Hidden: double tap shows all one-time hints again (as in
+                // Sailcast)
                 MouseArea {
                     anchors.fill: parent
-                    onPressAndHold: {
+                    onDoubleClicked: {
                         appWindow.appSettings.resetHints()
                         appWindow.showMessage(qsTr("Hints will be shown again"))
                     }
@@ -66,30 +66,51 @@ Page {
             }
 
             Label {
-                anchors.horizontalCenter: parent.horizontalCenter
-                visible: aboutPage.copyright.length > 0
-                text: aboutPage.copyright
-                font.pixelSize: Theme.fontSizeExtraSmall
-                color: Theme.secondaryColor
-            }
-
-            Label {
                 x: Theme.horizontalPageMargin
                 width: parent.width - 2 * Theme.horizontalPageMargin
                 wrapMode: Text.Wrap
                 horizontalAlignment: Text.AlignHCenter
                 font.pixelSize: Theme.fontSizeSmall
                 color: Theme.primaryColor
-                text: qsTr("Internet radio for Sailfish OS - thousands of stations from all over the world.")
+                text: qsTr("Internet radio for Sailfish OS \u2013 thousands of stations from all over the world: stations for you, search by genre, language and country, favorites with groups and tiles, track history with covers, sleep timer and backup.")
             }
 
-            DetailItem {
-                visible: aboutPage.licenseName.length > 0
-                label: qsTr("License")
-                value: aboutPage.licenseName
+            SectionHeader { text: qsTr("License and source code") }
+
+            Label {
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                wrapMode: Text.Wrap
+                font.pixelSize: Theme.fontSizeExtraSmall
+                color: Theme.secondaryHighlightColor
+                text: aboutPage.copyright + ". " + qsTr("Free software under the GNU General Public License, version 3 or later.")
             }
 
-            SectionHeader { text: qsTr("Data sources") }
+            ActionPill {
+                visible: aboutPage.sourceCodeUrl.length > 0
+                kind: "secondary"
+                x: Theme.horizontalPageMargin
+                text: qsTr("Source code")
+                onClicked: Qt.openUrlExternally(aboutPage.sourceCodeUrl)
+            }
+
+            ActionPill {
+                visible: aboutPage.privacyPolicyUrl.length > 0
+                kind: "secondary"
+                x: Theme.horizontalPageMargin
+                text: qsTr("Privacy policy")
+                onClicked: Qt.openUrlExternally(aboutPage.privacyPolicyUrl)
+            }
+
+            ActionPill {
+                visible: aboutPage.issuesUrl.length > 0
+                kind: "secondary"
+                x: Theme.horizontalPageMargin
+                text: qsTr("Report a problem")
+                onClicked: Qt.openUrlExternally(aboutPage.issuesUrl)
+            }
+
+            SectionHeader { text: qsTr("Thanks") }
 
             Label {
                 x: Theme.horizontalPageMargin
@@ -99,10 +120,7 @@ Page {
                 color: Theme.secondaryHighlightColor
                 linkColor: Theme.highlightColor
                 textFormat: Text.StyledText
-                text: qsTr("Station data from the community database %1. "
-                + "Station logos from the stations' websites, missing ones via Google's favicon service (can be turned off in the settings). "
-                + "Album covers and genres from the iTunes Search API (can be turned off in the settings). "
-                + "Home country detected via ipapi.co or api.country.is (only while set to automatic in the settings).")
+                text: qsTr("Station data: the community database %1. Covers and genres: iTunes Search API. Logos: the stations' websites. What is sent to whom can be checked and switched off in the settings under Privacy.")
                 .arg("<a href=\"https://www.radio-browser.info\">radio-browser.info</a>")
                 onLinkActivated: Qt.openUrlExternally(link)
             }
@@ -117,26 +135,6 @@ Page {
                 color: Theme.secondaryHighlightColor
                 text: qsTr("Developed with the assistance of an AI model (Claude by Anthropic). "
                 + "All changes are reviewed and tested by the developer on a Jolla Phone (2026).")
-            }
-
-            Item { width: 1; height: Theme.paddingMedium }
-
-            ButtonLayout {
-                Button {
-                    visible: aboutPage.sourceCodeUrl.length > 0
-                    text: qsTr("Source code")
-                    onClicked: Qt.openUrlExternally(aboutPage.sourceCodeUrl)
-                }
-                Button {
-                    visible: aboutPage.privacyPolicyUrl.length > 0
-                    text: qsTr("Privacy policy")
-                    onClicked: Qt.openUrlExternally(aboutPage.privacyPolicyUrl)
-                }
-                Button {
-                    visible: aboutPage.issuesUrl.length > 0
-                    text: qsTr("Report a problem")
-                    onClicked: Qt.openUrlExternally(aboutPage.issuesUrl)
-                }
             }
         }
 

@@ -49,9 +49,11 @@ private:
 
     void enqueue(const Operation &op);
     void next();
-    void createCollection(const std::function<void()> &then);
+    void createCollection(const QString &collection, const std::function<void()> &then);
+    void deleteThenStore(const QString &name, const QString &value, const QString &collection);
+    void loadFrom(const QString &name, const QString &collection);
     // attempt: 0 = first try, 1 = after creating the collection, 2 = last try
-    void storeSecret(const QString &name, const QString &value, int attempt);
+    void storeSecret(const QString &name, const QString &value, int attempt, const QString &collection);
     // Starts the request and calls done once it has finished; the request
     // deletes itself afterwards
     void run(Sailfish::Secrets::Request *request, const Done &done);

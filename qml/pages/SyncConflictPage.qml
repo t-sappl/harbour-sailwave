@@ -32,8 +32,9 @@ Page {
                            + "e.g. on another device.")
             }
 
-            Button {
-                anchors.horizontalCenter: parent.horizontalCenter
+            ActionPill {
+                kind: "primary"
+                x: Theme.horizontalPageMargin
                 text: qsTr("Merge both")
                 onClicked: {
                     appWindow.favoritesBackup.resolveMerge()
@@ -50,8 +51,9 @@ Page {
                            + "then the result is uploaded. Nothing is deleted.")
             }
 
-            Button {
-                anchors.horizontalCenter: parent.horizontalCenter
+            ActionPill {
+                kind: "secondary"
+                x: Theme.horizontalPageMargin
                 text: qsTr("Keep this device's")
                 onClicked: {
                     appWindow.favoritesBackup.resolveKeepLocal()

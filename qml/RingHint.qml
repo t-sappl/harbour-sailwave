@@ -50,5 +50,20 @@ Item {
         opacity: ringHint._started ? 1.0 : 0.0
         visible: opacity > 0
         Behavior on opacity { FadeAnimation { duration: 400 } }
+
+        // The same dark backing as in Sailcast (233): over a list the text
+        // could not be read
+        Rectangle {
+            z: -1
+            anchors.fill: parent
+            gradient: Gradient {
+                GradientStop { position: 0.0; color: Theme.rgba(Theme.highlightDimmerColor, 0.0) }
+                GradientStop {
+                    position: Math.min(0.3, 2 * Theme.paddingLarge / Math.max(1, label.height))
+                    color: Theme.rgba(Theme.highlightDimmerColor, 0.95)
+                }
+                GradientStop { position: 1.0; color: Theme.rgba(Theme.highlightDimmerColor, 0.97) }
+            }
+        }
     }
 }

@@ -31,6 +31,10 @@ Dialog {
             text: dialog.initialName
             label: qsTr("Group name")
             placeholderText: qsTr("Group name")
+            // Without word prediction: with it the word being typed only
+            // reaches "text" when it is committed, so "Accept" stayed
+            // disabled until tapping elsewhere (as in Sailcast)
+            inputMethodHints: Qt.ImhNoPredictiveText
             EnterKey.enabled: dialog.canAccept
             EnterKey.iconSource: "image://theme/icon-m-enter-accept"
             EnterKey.onClicked: dialog.accept()

@@ -208,14 +208,75 @@ Page {
                     }
                 }
 
-                // --- Section: Station Properties ---
                 Item {
                     width: parent.width
                     height: Theme.paddingLarge
                 }
 
+                // Votes, plays and format as tiles (as the statistics of a
+                // podcast in Sailcast); voting is a button of its own
+                StatTiles {
+                    readonly property int votes: Number(currentVal("votes")) || 0
+                    readonly property int clicks: Number(currentVal("clickcount")) || 0
+                    readonly property string codec: String(currentVal("codec") || "").toUpperCase()
+                    readonly property var bitrate: currentVal("bitrate")
+                    readonly property bool hasBitrate: bitrate && bitrate !== 0 && bitrate !== "0" && bitrate !== "?"
+                    tiles: [
+                        { value: "" + votes, label: qsTr("Votes") },
+                        { value: "" + clicks, label: qsTr("Plays") },
+                        { value: hasBitrate ? bitrate + " kbps" : (codec.length > 0 ? codec : qsTr("Unknown")),
+                          label: hasBitrate && codec.length > 0 ? codec : qsTr("Format") }
+                    ]
+                }
+
+                Item {
+                    width: parent.width
+                    height: Theme.paddingMedium
+                    visible: favoriteButton.visible
+                }
+
+                ActionPill {
+                    visible: currentVal("stationuuid").length > 0
+                    x: Theme.horizontalPageMargin
+                    kind: (hasVoted || votePending) ? "secondary" : "primary"
+                    text: (hasVoted || votePending) ? qsTr("Voted") : qsTr("Vote for this station")
+                    onClicked: {
+                        var uuid = currentVal("stationuuid")
+                        if (!uuid || votePending) {
+                            return
+                        }
+                        if (hasVoted) {
+                            appWindow.showMessage(qsTr("Voting for this station is possible again tomorrow"))
+                            return
+                        }
+                        appWindow.voteForStation(uuid, false)
+                    }
+                }
+
+                // When the own last vote was (also after the day is over, so
+                // it stays visible that this station was voted for before)
+                Label {
+                    x: Theme.horizontalPageMargin
+                    visible: page.lastVote > 0
+                    text: qsTr("Last voted on %1").arg(Qt.formatDate(new Date(page.lastVote), Qt.DefaultLocaleShortDate))
+                    color: Theme.secondaryHighlightColor
+                    font.pixelSize: Theme.fontSizeExtraSmall
+                }
+
+                TextSwitch {
+                    id: recordSwitch
+                    text: qsTr("Record track titles")
+                    description: qsTr("Switch off for stations that only send text, such as news.")
+                    visible: appWindow.appSettings.trackHistoryEnabled
+                    automaticCheck: false
+                    checked: !appWindow.isRecordingOff(page.station)
+                    onClicked: appWindow.setRecordingOff(page.station, checked)
+                }
+
+                // --- Section: about this station ---
+
                 SectionHeader {
-                    text: qsTr("Station properties")
+                    text: qsTr("About this station")
                 }
 
                 Column {
@@ -242,17 +303,6 @@ Page {
                         value: {
                             var lang = currentVal("language")
                             return lang ? lang : qsTr("Unknown")
-                        }
-                    }
-                    DetailItem {
-                        label: qsTr("Codec / bitrate")
-                        value: {
-                            var codec = currentVal("codec")
-                            var bitrate = currentVal("bitrate")
-                            var res = []
-                            if (codec) res.push(codec.toUpperCase())
-                            if (bitrate && bitrate !== 0 && bitrate !== "0" && bitrate !== "?") res.push(bitrate + " kbps")
-                            return res.length > 0 ? res.join(" · ") : qsTr("Unknown")
                         }
                     }
                     DetailItem {
@@ -329,47 +379,13 @@ Page {
                     }
                 }
 
-                // Popularity and voting in one row: the like button votes
-                // (filled at once while the vote is sent, and for a day
-                // after it), next to it votes and total clicks
-                Row {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    spacing: Theme.paddingSmall
-
-                    IconButton {
-                        anchors.verticalCenter: parent.verticalCenter
-                        visible: currentVal("stationuuid").length > 0
-                        icon.source: (hasVoted || votePending) ? "image://theme/icon-m-like" : "image://theme/icon-m-outline-like"
-                        onClicked: {
-                            var uuid = currentVal("stationuuid")
-                            if (!uuid || votePending) {
-                                return
-                            }
-                            if (hasVoted) {
-                                appWindow.showMessage(qsTr("Voting for this station is possible again tomorrow"))
-                                return
-                            }
-                            appWindow.voteForStation(uuid, false)
-                        }
-                    }
-                    Label {
-                        anchors.verticalCenter: parent.verticalCenter
-                        readonly property int votes: Number(currentVal("votes")) || 0
-                        readonly property int clicks: Number(currentVal("clickcount")) || 0
-                        text: qsTr("%Ln votes", "", votes) + " · " + qsTr("%Ln clicks", "", clicks)
-                        color: hasVoted ? Theme.highlightColor : Theme.secondaryHighlightColor
-                        font.pixelSize: Theme.fontSizeSmall
-                    }
-                }
-
-                // When the own last vote was (also after the day is over, so
-                // it stays visible that this station was voted for before)
                 Label {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    visible: page.lastVote > 0
-                    text: qsTr("Last voted on %1").arg(Qt.formatDate(new Date(page.lastVote), Qt.DefaultLocaleShortDate))
-                    color: Theme.secondaryHighlightColor
+                    width: parent.width - 2 * Theme.horizontalPageMargin
+                    x: Theme.horizontalPageMargin
+                    horizontalAlignment: Text.AlignRight
+                    text: qsTr("Source: radio-browser.info")
                     font.pixelSize: Theme.fontSizeExtraSmall
+                    color: Theme.secondaryColor
                 }
 
                 // --- Sections: track history and similar stations ---
@@ -402,11 +418,10 @@ Page {
                             width: parent.width - expandIconHistory.width - parent.spacing
                         }
 
-                        IconButton {
+                        FoldChevron {
                             id: expandIconHistory
                             anchors.verticalCenter: parent.verticalCenter
-                            icon.source: page.historyCollapsed ? "image://theme/icon-m-right" : "image://theme/icon-m-down"
-                            enabled: false
+                            collapsed: page.historyCollapsed
                         }
                     }
                 }
@@ -443,11 +458,10 @@ Page {
                             width: parent.width - expandIconSimilar.width - parent.spacing
                         }
 
-                        IconButton {
+                        FoldChevron {
                             id: expandIconSimilar
                             anchors.verticalCenter: parent.verticalCenter
-                            icon.source: page.similarCollapsed ? "image://theme/icon-m-right" : "image://theme/icon-m-down"
-                            enabled: false
+                            collapsed: page.similarCollapsed
                         }
                     }
                 }
@@ -455,6 +469,16 @@ Page {
                 Column {
                     width: parent.width
                     visible: similarStationsModel.count > 0 && !page.similarCollapsed
+
+                    Label {
+                        x: Theme.horizontalPageMargin
+                        width: parent.width - 2 * Theme.horizontalPageMargin
+                        visible: page.similarByCountry
+                        wrapMode: Text.Wrap
+                        font.pixelSize: Theme.fontSizeExtraSmall
+                        color: Theme.secondaryHighlightColor
+                        text: qsTr("This station has no tags, so popular stations of its country are shown.")
+                    }
 
                     // Same row as in every other station list: tap plays the
                     // station, the (i) button opens its info page (replacing
@@ -589,8 +613,11 @@ Page {
         appWindow.homepageOverridesUpdated()
     }
 
+    property int infoRequestId: 0
+
     function loadInfo() {
         stationInfo = null
+        var myInfoId = ++infoRequestId
 
         var uuid = currentVal("stationuuid")
         if (!uuid) {
@@ -601,6 +628,10 @@ Page {
         loading = true
         streamHealth = ""
         RadioApi.requestJson(RadioApi.apiUrl("stations/byuuid?uuids=") + encodeURIComponent(uuid), appWindow.apiUserAgent, function(results) {
+            if (myInfoId !== infoRequestId) {
+                // The page shows another station by now
+                return
+            }
             loading = false
             if (results && Array.isArray(results) && results.length === 0) {
                 // Answer without the station: no longer listed

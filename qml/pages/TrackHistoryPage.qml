@@ -87,9 +87,18 @@ Page {
     property string targetStationKey: ""
     property bool _scrolledToTarget: false
 
+    // Station logo size: 48 px like the station rows of the other pages
+    readonly property real logoSize: Math.round(Theme.iconSizeSmall * 1.2)
+
     onStatusChanged: {
+        if (status === PageStatus.Active) {
+            healStrictCheck()
+        }
         if (ringMember && status === PageStatus.Active) {
             appWindow.ringPageActivated(trackHistoryPage)
+        }
+        if (status === PageStatus.Activating) {
+            keepTop()
         }
         // Scroll while the page slides in, and once more when it is fully
         // shown: while sliding in, the rows around the target are created and
@@ -105,12 +114,110 @@ Page {
         }
     }
 
+    // All the way to the top INCLUDING the page header (title, neighbour
+    // line, search field). positionViewAtBeginning() and contentY = originY
+    // put the first row at the top and push the header out of sight (the
+    // title was missing after playing a station from this page).
+    function scrollToTop() {
+        var headerHeight = listView.headerItem ? listView.headerItem.height : 0
+        listView.contentY = listView.headerItem ? listView.headerItem.y : listView.originY - headerHeight
+        listView.returnToBounds()
+    }
+
+    // The page header grows after the page was created (neighbour line,
+    // search field appear when the data and the ring are there) and the view
+    // then stayed where it was: the title was scrolled out of sight. As long
+    // as the user has not scrolled, the top stays at the top.
+    function keepTop() {
+        if (!listView.userScrolled && !listView.moving) {
+            scrollToTop()
+        }
+    }
+
+    // Self-healing: with the page header scrolled out by exactly its own
+    // height (contentY == originY, the first row at the very top, nobody
+    // scrolls there to the pixel) the title is missing. This happened after
+    // swiping back to the page (the page stack is rebuilt, the anchor
+    // restore ran with stale values) and then stuck, because a list taller
+    // than the view regards the position as valid. Checked after activation,
+    // restoring the anchor and every end of a movement.
+    // After activation (swiping to the page) and after restoring the anchor
+    // the first checks are strict: if the title is partly scrolled out
+    // (the view is inside the header area) the position goes to the top of
+    // the header. Nobody stops there on purpose; this makes the page
+    // independent of the exact fault state. Movement ends only use the
+    // "stuck" rule below.
+    property int healStrictLeft: 0
+    function healStrictCheck() {
+        healStrictLeft = 3
+        healHeaderTimer.restart()
+    }
+
+    function healHeader() {
+        if (listView.moving || listView.dragging || !listView.headerItem
+                || listView.headerItem.height <= 0) {
+            return
+        }
+        // The top of the page is the top edge of the header item (its y in
+        // content coordinates) - independent of how originY is defined.
+        // The device log showed contentY == originY == -header height at the
+        // normal top, so that comparison is no sign of a missing title. The
+        // faulty state: the list thinks it is at its beginning
+        // (atYBeginning, so it cannot be pulled down) although the header
+        // top lies above the view - seen after swiping between the pages.
+        var headerTop = listView.headerItem.y
+        var strict = healStrictLeft > 0
+        if (strict) {
+            healStrictLeft--
+            if (healStrictLeft > 0) {
+                healHeaderTimer.restart()
+            }
+            if (listView.contentY > headerTop + 3
+                    && listView.contentY < headerTop + listView.headerItem.height - 3) {
+                console.warn("Sailwave scroll: title partly hidden after activation/restore (contentY "
+                             + listView.contentY + ", headerTop " + headerTop + ", header "
+                             + listView.headerItem.height + ") - back to the top of the header")
+                listView.contentY = headerTop
+                return
+            }
+        }
+        if (listView.atYBeginning && listView.contentY > headerTop + 3) {
+            console.warn("Sailwave scroll: header was hidden (stuck, contentY " + listView.contentY
+                         + ", headerTop " + headerTop + ", originY " + listView.originY
+                         + ", header " + listView.headerItem.height
+                         + ", topMargin " + listView.topMargin
+                         + ", height " + listView.height
+                         + ", contentHeight " + listView.contentHeight
+                         + ") - scrolling to the top")
+            listView.userScrolled = false
+            listView.forceLayout()
+            listView.positionViewAtBeginning()
+            if (listView.contentY > listView.headerItem.y + 3) {
+                // wrong bound: set the position directly (no returnToBounds())
+                listView.contentY = listView.headerItem.y
+            }
+        }
+    }
+
+    Timer {
+        id: healHeaderTimer
+        interval: 150
+        onTriggered: trackHistoryPage.healHeader()
+    }
+
+
     // The station's header at the top, with a little space above it so the
     // name is not cut off at the edge. The same for the first station (going
     // to the very top including the search field jerked).
     function scrollToStation(key) {
         var index = headerIndex(key)
         if (index < 0) {
+            return
+        }
+        if (index === 0) {
+            // The first station is right below the search field anyway:
+            // stay at the top so the page title stays visible
+            scrollToTop()
             return
         }
         listView.positionViewAtIndex(index, ListView.Beginning)
@@ -148,7 +255,7 @@ Page {
                 mainListModel.insert(1 + t, trackRow(key, tracks[t]))
             }
         }
-        listView.positionViewAtBeginning()
+        scrollToTop()
     }
 
     // A SilicaListView only creates the rows that are on screen. The former
@@ -170,6 +277,17 @@ Page {
         // (same fix as on the advanced search page)
         currentIndex: -1
 
+        property bool userScrolled: false
+        onMovementStarted: userScrolled = true
+        onMovementEnded: {
+            userScrolled = !atYBeginning
+            healHeaderTimer.restart()
+        }
+        Connections {
+            target: listView.headerItem
+            onHeightChanged: trackHistoryPage.keepTop()
+        }
+
         // Hidden while the history is empty (a pulley menu with only a
         // disabled entry is not allowed by the Sailfish guidelines)
         PullDownMenu {
@@ -190,6 +308,8 @@ Page {
             PageHeader {
                 title: qsTr("Track history")
             }
+
+            RingNeighbours { ringPage: trackHistoryPage }
 
             // Filters by title, artist, genre and station
             SearchField {
@@ -242,18 +362,78 @@ Page {
             width: listView.width
             height: model.isHeader ? headerItem.height : trackItem.height
 
-            // Station header
-            BackgroundItem {
+            // Station header (press and hold: show the station / delete its tracks)
+            ListItem {
                 id: headerItem
                 width: parent.width
                 // Grows with the heading (large system font)
-                height: Math.max(Theme.itemSizeSmall, stationTitle.height + Theme.paddingSmall)
+                // paddingLarge of air above: separates the stations from each other
+                contentHeight: Math.max(Theme.itemSizeSmall, stationTitle.height + Theme.paddingSmall) + Theme.paddingLarge
                 visible: model.isHeader === true
 
                 onClicked: trackHistoryPage.toggleStation(model.stationKey)
 
+                menu: ContextMenu {
+                    MenuItem {
+                        text: qsTr("Play")
+                        onClicked: {
+                            var pg = trackHistoryPage.groups[model.stationKey]
+                            var pt = pg && pg.tracks.length > 0 ? pg.tracks[0] : {}
+                            appWindow.playStation({
+                                stationuuid: model.stationuuid || "",
+                                name: model.stationName || "",
+                                url: pt.url || "",
+                                url_resolved: pt.url_resolved || "",
+                                favicon: model.favicon || "",
+                                homepage: model.homepage || ""
+                            })
+                        }
+                    }
+                    MenuItem {
+                        text: qsTr("Show station")
+                        onClicked: {
+                            // The stream addresses are in the station's tracks
+                            var g = trackHistoryPage.groups[model.stationKey]
+                            var tr = g && g.tracks.length > 0 ? g.tracks[0] : {}
+                            appWindow.openStationInfo({
+                                stationuuid: model.stationuuid || "",
+                                name: model.stationName || "",
+                                url: tr.url || "",
+                                url_resolved: tr.url_resolved || "",
+                                favicon: model.favicon || "",
+                                homepage: model.homepage || ""
+                            })
+                        }
+                    }
+                    MenuItem {
+                        // Stations that only send text (news): no recording
+                        text: appWindow.isRecordingOff(trackHistoryPage.stationOf(model.stationKey))
+                              ? qsTr("Record this station again")
+                              : qsTr("Do not record this station")
+                        onClicked: {
+                            var st = trackHistoryPage.stationOf(model.stationKey)
+                            appWindow.setRecordingOff(st, !appWindow.isRecordingOff(st))
+                        }
+                    }
+                    MenuItem {
+                        text: qsTr("Delete tracks of this station")
+                        onClicked: {
+                            // Captured now: the delegate may be gone before the countdown ends
+                            var key = model.stationKey
+                            var target = trackHistoryPage
+                            headerItem.remorseAction(qsTr("Deleting tracks"), function() {
+                                target.deleteStationTracks(key)
+                            })
+                        }
+                    }
+                }
+
                 Row {
-                    anchors.fill: parent
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    height: headerItem.contentHeight - Theme.paddingLarge
+                    anchors.topMargin: Theme.paddingLarge
                     anchors.leftMargin: Theme.horizontalPageMargin
                     anchors.rightMargin: Theme.horizontalPageMargin
                     spacing: Theme.paddingMedium
@@ -261,26 +441,32 @@ Page {
                     StationIcon {
                         id: stationIcon
                         anchors.verticalCenter: parent.verticalCenter
-                        iconSize: Theme.iconSizeSmall
+                        iconSize: trackHistoryPage.logoSize
                         stationuuid: model.stationuuid || ""
                         faviconUrl: model.favicon || ""
                         homepageUrl: model.homepage || ""
                         stationName: model.stationName || ""
                     }
 
-                    SectionHeader {
+                    // Left-aligned right next to the logo (a SectionHeader is
+                    // right-aligned and pulled the name far away from it)
+                    Label {
                         id: stationTitle
                         // Display only: stationName stays the stored key
-                        text: RadioApi.cleanName(model.stationName) || qsTr("Unknown station")
+                        text: RadioApi.displayName(model.stationName) || qsTr("Unknown station")
                         anchors.verticalCenter: parent.verticalCenter
                         width: parent.width - stationIcon.width - collapsibleIcon.width - (parent.spacing * 2)
+                        horizontalAlignment: Text.AlignLeft
+                        truncationMode: TruncationMode.Fade
+                        font.pixelSize: Theme.fontSizeMedium
+                        color: headerItem.highlighted ? Theme.primaryColor : Theme.highlightColor
                     }
 
-                    IconButton {
+                    FoldChevron {
                         id: collapsibleIcon
                         anchors.verticalCenter: parent.verticalCenter
-                        icon.source: trackHistoryPage.isStationCollapsed(model.stationKey) ? "image://theme/icon-m-right" : "image://theme/icon-m-down"
-                        enabled: false
+                        collapsed: trackHistoryPage.isStationCollapsed(model.stationKey)
+                        tint: headerItem.highlighted ? Theme.primaryColor : Theme.highlightColor
                     }
                 }
             }
@@ -289,7 +475,8 @@ Page {
             ListItem {
                 id: trackItem
                 width: parent.width
-                contentHeight: Math.max(Theme.itemSizeSmall, textColumn.height + 2 * Theme.paddingMedium)
+                contentHeight: Math.max(Theme.itemSizeSmall, textColumn.height + 2 * Theme.paddingMedium,
+                                         trackContent.hasArt ? trackContent.artSize + 2 * Theme.paddingSmall : 0)
                 visible: model.isHeader === false
 
                 menu: ContextMenu {
@@ -322,16 +509,28 @@ Page {
                     trackHistoryPage.moveStationToTop(stationKey)
                 }
 
-                Row {
-                    anchors.fill: parent
-                    anchors.leftMargin: Theme.horizontalPageMargin + Theme.iconSizeSmall + Theme.paddingMedium
-                    anchors.rightMargin: Theme.horizontalPageMargin
-                    spacing: Theme.paddingMedium
+                // The text starts exactly under the station name (one edge for
+                // all rows, with or without cover); the cover, if there is one,
+                // sits at the right edge.
+                Item {
+                    id: trackContent
+                    anchors {
+                        fill: parent
+                        leftMargin: Theme.horizontalPageMargin + trackHistoryPage.logoSize + Theme.paddingMedium
+                        rightMargin: Theme.horizontalPageMargin
+                    }
+
+                    // Space is reserved as soon as the track has a cover URL
+                    // (no jumping while the image loads)
+                    readonly property bool hasArt: !model.isHeader && !!model.artUrl
+                    readonly property real artSize: Math.round(Theme.iconSizeMedium * 1.25)
 
                     Item {
                         id: trackArt
-                        width: Theme.iconSizeSmall
+                        visible: trackContent.hasArt
+                        width: trackContent.artSize
                         height: width
+                        anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
 
                         Image {
@@ -352,7 +551,7 @@ Page {
                     Column {
                         id: textColumn
                         anchors.verticalCenter: parent.verticalCenter
-                        width: parent.width - trackArt.width - parent.spacing
+                        width: parent.width - (trackContent.hasArt ? trackArt.width + Theme.paddingMedium : 0)
                         spacing: Theme.paddingSmall / 2
 
                         readonly property var parts: TrackText.parts({
@@ -393,6 +592,7 @@ Page {
                         }
                     }
                 }
+
             }
         }
 
@@ -651,6 +851,43 @@ Page {
 
         // Tell the PlayerBar, the info page and other copies of this page,
         // but do not rebuild this list again
+        _ownUpdate = true
+        appWindow.trackHistoryUpdated()
+        _ownUpdate = false
+    }
+
+    // Deleting all tracks of one station: the station's group disappears
+    // from the list (as the last single entry does); other stations and the
+    // scroll position stay as they are
+    // The station of a group as an object (id and stream address of its newest track)
+    function stationOf(key) {
+        var g = groups[key]
+        var t = g && g.tracks.length > 0 ? g.tracks[0] : {}
+        return { stationuuid: (g && g.stationuuid) || "", url: t.url || "" }
+    }
+
+    function deleteStationTracks(key) {
+        var group = groups[key]
+        if (!group) {
+            return
+        }
+        var names = {}
+        for (var t = 0; t < group.tracks.length; t++) {
+            names[group.tracks[t].stationName || ""] = true
+        }
+        for (var n in names) {
+            appWindow.persistentState.deleteTrackHistoryOfStation(n)
+        }
+        // Rows of the group (header and tracks) from the end
+        for (var i = mainListModel.count - 1; i >= 0; i--) {
+            if (mainListModel.get(i).stationKey === key) {
+                mainListModel.remove(i)
+            }
+        }
+        rawHistory = rawHistory.filter(function(h) { return groupKeyOf(h) !== key })
+        delete groups[key]
+        groupOrder = groupOrder.filter(function(k) { return k !== key })
+
         _ownUpdate = true
         appWindow.trackHistoryUpdated()
         _ownUpdate = false

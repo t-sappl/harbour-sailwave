@@ -5,7 +5,7 @@
 Name:       harbour-sailwave-radio
 
 Summary:    Internet radio player for Sailfish OS
-Version:    1.1.1
+Version:    1.2
 Release:    1
 License:    GPL-3.0-or-later
 URL:        https://github.com/t-sappl/harbour-sailwave/
@@ -92,6 +92,45 @@ desktop-file-install --delete-original \
 %{_datadir}/icons/hicolor/*/apps/%{name}.png
 
 %changelog
+* Sat Nov 07 2026 Thomas Sappl <thomas.sappl@gmail.com> - 1.2-1
+- Usability update and unified design (details in CHANGELOG.md).
+- Same controls as in Sailcast and Sailfeed: one button style, subtle
+  arrows on rows that open a page, unified hint texts and messages
+  (several messages stack, a tap hides them).
+- Clear settings: short main page with summaries and sub-pages Playback,
+  Discover, Backup and sync, Privacy. Redesigned About page.
+- Neighbour pages are named under the page title. The page title stays
+  visible and no longer jumps.
+- Calmer lists: the playing station is highlighted, logos on a faint
+  plate, cleaner names and tags.
+- Player bar: larger icons, swipe up/down to open and close. Sleep timer 5
+  to 60 minutes or an own time.
+- Station info with tiles for votes, plays and format.
+- Nextcloud: sign in in the browser, no typing of user name and password;
+  the app gets its own app password.
+- Backups: they contain the track history, show their reason and can be
+  deleted one by one (the 10 newest manual ones are kept). When restoring,
+  stations that are gone from the station database are looked up again.
+- Advanced search: "Advanced" chip, result count while typing and after a
+  tap on a filter chip ("100+"), filters as chips, "Clear filters".
+- Start page: "Last heard" row, faster top stations.
+- Favorites: choose the stations when creating a group; fold handles as in
+  Sailcast.
+- Track history: "Play" and "Show station" in the menu, recording can be
+  switched off per station, text-only stations are not recorded.
+- Starting a station pauses other players that are playing, e.g. a
+  podcast.
+- A pause is no longer undone by a pending reconnect.
+- The WebDAV password is no longer lost after a restart.
+- Empty rows on the start page right after the start.
+- The search keyboard no longer closes while typing.
+- Backups are written safely and checked before restoring; favorites are
+  not all marked as missing after an empty server answer.
+- Station logos look the same everywhere and work on every ambience and
+  cover: a light tile (dark for very bright logos) behind transparent logos,
+  rounded corners for the others; the same tile on album covers and on the
+  lock screen image.
+
 * Wed Nov 04 2026 Thomas Sappl <thomas.sappl@gmail.com> - 1.1.1-1
 - Fix: rows, headings, the player bar and the favorite tiles now grow with
   the system font size (no more overlapping text with a large font).

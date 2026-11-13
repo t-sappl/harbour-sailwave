@@ -153,6 +153,43 @@ function groupByNameMatch(list, phrase) {
     return groups[0].concat(groups[1], groups[2]);
 }
 
+// Name for the lists: cleanName plus leading "#" / "*" decoration removed
+// ("# 70s 80s 90s RdMix Network" -> "70s 80s 90s RdMix Network"). Display
+// only - the stored name and the station identity stay untouched.
+function displayName(name) {
+    var n = cleanName(name).replace(/^[#*\s]+/, "");
+    return n.length > 0 ? n : cleanName(name);
+}
+
+// Tags for the second line in the lists: the raw radio-browser tags contain
+// bitrates ("192kbps"), bare numbers, "#" decorations and duplicates. Drops
+// those, removes a leading "#", keeps the first `max` that are left.
+// keepBitrate: keep a bitrate tag ("192kbps") - for stations without a
+// bitrate of their own.
+function displayTags(csv, max, keepBitrate) {
+    var parts = splitList(csv);
+    var seen = {};
+    var result = [];
+    for (var i = 0; i < parts.length && result.length < max; i++) {
+        var t = parts[i].replace(/^#+\s*/, "").trim();
+        var key = t.toLowerCase();
+        if (t.length < 2 || !/[a-z\u00C0-\uFFFF]/i.test(t)) {
+            continue;
+        }
+        // A bitrate tag is dropped only if the station's own bitrate field
+        // is shown in the line above; without it the tag is the one hint
+        if (!keepBitrate && (/^\d+\s*(k|kb|kbps|kbit|kbit\/s|mp3|aac)$/i.test(t) || /\bkbps\b/i.test(t))) {
+            continue;
+        }
+        if (seen[key]) {
+            continue;
+        }
+        seen[key] = true;
+        result.push(t);
+    }
+    return result;
+}
+
 function popularity(station) {
     return (station.votes || 0) * 5 + (station.clickcount || 0);
 }
@@ -223,6 +260,119 @@ function requestJson(url, userAgent, callback) {
     }
 
     tryRequest();
+}
+
+// Several stations by UUID, in batches (a long list in one GET URL runs into
+// the server's limit of about 8 kB: 414 without failover). callback(list):
+// all stations found, or null if any batch failed or a non-empty list of
+// UUIDs got an empty answer (so that "missing" is never guessed from it).
+function requestByUuids(uuids, userAgent, callback) {
+    var size = 40;
+    var chunks = [];
+    for (var i = 0; i < uuids.length; i += size) {
+        chunks.push(uuids.slice(i, i + size));
+    }
+    if (chunks.length === 0) {
+        callback([]);
+        return;
+    }
+    var pending = chunks.length;
+    var okCount = 0;
+    var merged = [];
+    function oneDone(list) {
+        if (Array.isArray(list)) {
+            okCount++;
+            merged = merged.concat(list);
+        }
+        pending--;
+        if (pending === 0) {
+            callback(okCount === chunks.length && merged.length > 0 ? merged : null);
+        }
+    }
+    for (var c = 0; c < chunks.length; c++) {
+        var ids = chunks[c].map(function(u) { return encodeURIComponent(u); });
+        requestJson(apiUrl("stations/byuuid?uuids=") + ids.join(","), userAgent, oneDone);
+    }
+}
+
+// A station that has no entry under its UUID any more (deleted and created
+// again by the maintainers): looks for it by its stream URL, then by its
+// exact name in the same country. Of several matches the one whose stream
+// worked at the last check wins, then the more popular one.
+// callback(rawStation) - the raw API object, or null if nothing was found
+// or the requests failed. Used when restoring a backup.
+function pickReplacement(list) {
+    var best = null;
+    for (var i = 0; i < list.length; i++) {
+        var s = list[i];
+        if (!s || !s.url) {
+            continue;
+        }
+        if (!best
+                || (s.lastcheckok === 1 && best.lastcheckok !== 1)
+                || ((s.lastcheckok === 1) === (best.lastcheckok === 1) && popularity(s) > popularity(best))) {
+            best = s;
+        }
+    }
+    return best;
+}
+
+function findReplacement(station, userAgent, callback) {
+    function byName() {
+        var name = cleanName(station.name);
+        if (name.length === 0 || !station.countrycode) {
+            callback(null);
+            return;
+        }
+        var url = apiUrl("stations/search?name=") + encodeURIComponent(name)
+                + "&nameExact=true&hidebroken=true&limit=10&countrycode="
+                + encodeURIComponent(station.countrycode);
+        requestJson(url, userAgent, function(list) {
+            if (!Array.isArray(list)) {
+                callback(null);
+                return;
+            }
+            var wanted = name.toLowerCase();
+            callback(pickReplacement(list.filter(function(s) {
+                return cleanName(s.name).toLowerCase() === wanted;
+            })));
+        });
+    }
+    if (!station.url) {
+        byName();
+        return;
+    }
+    requestJson(apiUrl("stations/byurl?url=") + encodeURIComponent(station.url), userAgent, function(list) {
+        var found = Array.isArray(list) ? pickReplacement(list) : null;
+        if (found) {
+            callback(found);
+        } else {
+            byName();
+        }
+    });
+}
+
+// For many stations one after the other (not in parallel: friendly to the
+// public servers). callback(results): an array as long as the input, with
+// the raw station or null at each position. At most maxCount are searched.
+function findReplacements(stations, userAgent, maxCount, callback) {
+    var results = [];
+    var index = 0;
+    function next() {
+        if (index >= stations.length || index >= maxCount) {
+            while (results.length < stations.length) {
+                results.push(null);
+            }
+            callback(results);
+            return;
+        }
+        var i = index++;
+        findReplacement(stations[i], userAgent, function(found) {
+            results[i] = found;
+            next();
+        });
+    }
+    next();
 }
 
 // radio-browser sometimes lists the same stream twice (separate entries

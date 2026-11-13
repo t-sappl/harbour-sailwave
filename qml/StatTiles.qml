@@ -1,0 +1,68 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+import QtQuick 2.6
+import Sailfish.Silica 1.0
+
+// Small tiles with a value and a caption (as in Sailcast): tiles = [{value,
+// label}], three per row (five in landscape). A Flow: the tiles of a last,
+// incomplete row share its width, so there is no gap.
+Flow {
+    id: grid
+    property var tiles: []
+    x: Theme.horizontalPageMargin
+    width: (parent ? parent.width : 0) - 2 * Theme.horizontalPageMargin
+    readonly property int columns: width > Theme.itemSizeHuge * 4 ? Math.max(1, Math.min(5, tiles.length))
+                                             : ((tiles.length === 2 || tiles.length === 4) ? 2 : 3)
+    function widthAt(index) {
+        var full = Math.floor(tiles.length / columns) * columns
+        var perRow = index < full ? columns : tiles.length - full
+        return (width - (perRow - 1) * spacing) / perRow
+    }
+    spacing: Theme.paddingSmall
+    // All tiles as high as the highest (a two-line caption must not make one
+    // tile stick out of its row)
+    property real tileHeight: 0
+    function measure() {
+        var h = 0
+        for (var i = 0; i < tileRepeater.count; i++) {
+            var item = tileRepeater.itemAt(i)
+            if (item) {
+                h = Math.max(h, item.contentHeight)
+            }
+        }
+        tileHeight = h + 2 * Theme.paddingMedium
+    }
+
+    Repeater {
+        id: tileRepeater
+        model: grid.tiles
+        onItemAdded: grid.measure()
+        Rectangle {
+            readonly property real contentHeight: tileColumn.height
+            onContentHeightChanged: grid.measure()
+            width: grid.widthAt(index)
+            height: grid.tileHeight
+            radius: Theme.paddingSmall
+            color: Theme.rgba(Theme.highlightBackgroundColor, 0.12)
+            Column {
+                id: tileColumn
+                x: Theme.paddingMedium
+                y: Theme.paddingMedium
+                width: parent.width - 2 * Theme.paddingMedium
+                Label {
+                    width: parent.width
+                    text: modelData.value
+                    wrapMode: Text.Wrap
+                    font.pixelSize: Theme.fontSizeSmall
+                    color: Theme.highlightColor
+                }
+                Label {
+                    width: parent.width
+                    text: modelData.label
+                    wrapMode: Text.Wrap
+                    font.pixelSize: Theme.fontSizeTiny
+                    color: Theme.secondaryHighlightColor
+                }
+            }
+        }
+    }
+}

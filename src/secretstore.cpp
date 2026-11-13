@@ -17,12 +17,16 @@ using namespace Sailfish::Secrets;
 
 namespace {
 const QString CollectionName = QStringLiteral("sailwave");
+// Used when "sailwave" belongs to another application identity (seen after
+// running the app from Qt Creator and from the installed package on the same
+// device: "Collection sailwave ... is owned by a different application")
+const QString AltCollectionName = QStringLiteral("sailwaveradio");
 // Pause before the last store attempt (see storeSecret)
 const int RetryDelayMs = 1500;
 
-Secret::Identifier identifierFor(const QString &name)
+Secret::Identifier identifierFor(const QString &name, const QString &collection)
 {
-    return Secret::Identifier(name, CollectionName,
+    return Secret::Identifier(name, collection,
                               SecretManager::DefaultEncryptedStoragePluginName);
 }
 }
@@ -74,17 +78,20 @@ void SecretStore::run(Request *request, const Done &done)
 // practice once, on the very first save: creating a collection makes the
 // system ask the user for access ("Allow access") - doing it at every start
 // (as up to v61) brought that question at every start.
-void SecretStore::createCollection(const std::function<void()> &then)
+void SecretStore::createCollection(const QString &collection, const std::function<void()> &then)
 {
     CreateCollectionRequest *request = new CreateCollectionRequest(this);
     request->setManager(m_manager);
-    request->setCollectionName(CollectionName);
+    request->setCollectionName(collection);
+    request->setUserInteractionMode(SecretManager::SystemInteraction);
     request->setAccessControlMode(SecretManager::OwnerOnlyMode);
     request->setCollectionLockType(CreateCollectionRequest::DeviceLock);
     request->setDeviceLockUnlockSemantic(SecretManager::DeviceLockKeepUnlocked);
     request->setStoragePluginName(SecretManager::DefaultEncryptedStoragePluginName);
     request->setEncryptionPluginName(SecretManager::DefaultEncryptedStoragePluginName);
-    run(request, [then](bool, const QString &) {
+    run(request, [then, collection](bool ok, const QString &error) {
+        // Logged: a failure here shows up later only as "Collection ... does not exist"
+        qWarning() << "[SecretStore] Creating collection" << collection << (ok ? "ok" : "failed:") << (ok ? QString() : error);
         then();
     });
 }
@@ -97,9 +104,9 @@ void SecretStore::createCollection(const std::function<void()> &then)
 //    when it was entered a second time);
 // 3. once more after a short pause.
 // Only the last failure is reported (stored with ok = false).
-void SecretStore::storeSecret(const QString &name, const QString &value, int attempt)
+void SecretStore::storeSecret(const QString &name, const QString &value, int attempt, const QString &collection)
 {
-    Secret secret(identifierFor(name));
+    Secret secret(identifierFor(name, collection));
     secret.setType(Secret::TypeBlob);
     secret.setData(value.toUtf8());
 
@@ -108,17 +115,24 @@ void SecretStore::storeSecret(const QString &name, const QString &value, int att
     request->setSecretStorageType(StoreSecretRequest::CollectionSecret);
     request->setUserInteractionMode(SecretManager::SystemInteraction);
     request->setSecret(secret);
-    run(request, [this, name, value, attempt](bool ok, const QString &error) {
+    run(request, [this, name, value, attempt, collection](bool ok, const QString &error) {
+        // The collection belongs to another application identity: use the
+        // second collection instead (this app can always create its own)
+        if (!ok && collection == CollectionName && error.contains(QStringLiteral("different application"), Qt::CaseInsensitive)) {
+            qWarning() << "[SecretStore] Collection" << collection << "belongs to another application, using" << AltCollectionName;
+            deleteThenStore(name, value, AltCollectionName);
+            return;
+        }
         if (!ok && attempt == 0) {
-            createCollection([this, name, value]() {
-                storeSecret(name, value, 1);
+            createCollection(collection, [this, name, value, collection]() {
+                storeSecret(name, value, 1, collection);
             });
             return;
         }
         if (!ok && attempt == 1) {
             qWarning() << "[SecretStore] Storing failed after creating the collection, retrying:" << error;
-            QTimer::singleShot(RetryDelayMs, this, [this, name, value]() {
-                storeSecret(name, value, 2);
+            QTimer::singleShot(RetryDelayMs, this, [this, name, value, collection]() {
+                storeSecret(name, value, 2, collection);
             });
             return;
         }
@@ -127,49 +141,69 @@ void SecretStore::storeSecret(const QString &name, const QString &value, int att
     });
 }
 
+// Delete an existing secret first (fails harmlessly if there is none, or if
+// the collection does not exist yet), then store
+void SecretStore::deleteThenStore(const QString &name, const QString &value, const QString &collection)
+{
+    DeleteSecretRequest *del = new DeleteSecretRequest(this);
+    del->setManager(m_manager);
+    del->setIdentifier(identifierFor(name, collection));
+    del->setUserInteractionMode(SecretManager::SystemInteraction);
+    run(del, [this, name, value, collection](bool, const QString &) {
+        storeSecret(name, value, 0, collection);
+    });
+}
+
 void SecretStore::store(const QString &name, const QString &value)
 {
     enqueue([this, name, value]() {
-        // Delete an existing secret first (fails harmlessly if there is
-        // none, or if the collection does not exist yet)
-        DeleteSecretRequest *del = new DeleteSecretRequest(this);
-        del->setManager(m_manager);
-        del->setIdentifier(identifierFor(name));
-        del->setUserInteractionMode(SecretManager::SystemInteraction);
-        run(del, [this, name, value](bool, const QString &) {
-            storeSecret(name, value, 0);
-        });
+        deleteThenStore(name, value, CollectionName);
     });
 }
 
 // Reading never creates the collection: it is only called when a secret
-// was stored before (so the collection exists)
+// was stored before (so the collection exists). Tries "sailwave" first, then
+// the second collection (see storeSecret).
 void SecretStore::load(const QString &name)
 {
-    enqueue([this, name]() {
-        StoredSecretRequest *request = new StoredSecretRequest(this);
-        request->setManager(m_manager);
-        request->setIdentifier(identifierFor(name));
-        request->setUserInteractionMode(SecretManager::SystemInteraction);
-        run(request, [this, request, name](bool ok, const QString &error) {
-            // Still valid here: the request deletes itself only later
-            const QString value = ok ? QString::fromUtf8(request->secret().data()) : QString();
-            emit loaded(name, ok, value, error);
-            next();
-        });
+    enqueue([this, name]() { loadFrom(name, CollectionName); });
+}
+
+void SecretStore::loadFrom(const QString &name, const QString &collection)
+{
+    StoredSecretRequest *request = new StoredSecretRequest(this);
+    request->setManager(m_manager);
+    request->setIdentifier(identifierFor(name, collection));
+    request->setUserInteractionMode(SecretManager::SystemInteraction);
+    run(request, [this, request, name, collection](bool ok, const QString &error) {
+        if (!ok && collection == CollectionName) {
+            loadFrom(name, AltCollectionName);
+            return;
+        }
+        // Still valid here: the request deletes itself only later
+        const QString value = ok ? QString::fromUtf8(request->secret().data()) : QString();
+        emit loaded(name, ok, value, error);
+        next();
     });
 }
 
 void SecretStore::remove(const QString &name)
 {
     enqueue([this, name]() {
-        DeleteSecretRequest *request = new DeleteSecretRequest(this);
-        request->setManager(m_manager);
-        request->setIdentifier(identifierFor(name));
-        request->setUserInteractionMode(SecretManager::SystemInteraction);
-        run(request, [this, name](bool ok, const QString &error) {
-            emit removed(name, ok, error);
-            next();
+        // Both collections: the secret may be in either of them
+        DeleteSecretRequest *alt = new DeleteSecretRequest(this);
+        alt->setManager(m_manager);
+        alt->setIdentifier(identifierFor(name, AltCollectionName));
+        alt->setUserInteractionMode(SecretManager::SystemInteraction);
+        run(alt, [this, name](bool, const QString &) {
+            DeleteSecretRequest *request = new DeleteSecretRequest(this);
+            request->setManager(m_manager);
+            request->setIdentifier(identifierFor(name, CollectionName));
+            request->setUserInteractionMode(SecretManager::SystemInteraction);
+            run(request, [this, name](bool ok, const QString &error) {
+                emit removed(name, ok, error);
+                next();
+            });
         });
     });
 }

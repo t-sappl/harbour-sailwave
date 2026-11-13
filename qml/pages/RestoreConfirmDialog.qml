@@ -19,6 +19,7 @@ Dialog {
 
     readonly property bool replaceMode: modeCombo.currentIndex === 0
     readonly property int favoriteCount: backupData ? backupData.favorites.length : 0
+    readonly property int trackCount: backupData && backupData.trackHistory ? backupData.trackHistory.length : 0
     readonly property int groupCount: backupData && backupData.groups ? backupData.groups.length : 0
     readonly property var changes: backupData ? appWindow.favoritesBackup.previewRestore(backupData)
                                               : ({ add: 0, remove: 0, regroup: 0, groupsAdd: 0, groupsRemove: 0 })
@@ -66,6 +67,7 @@ Dialog {
                 label: qsTr("Content")
                 value: qsTr("%n favorite(s)", "", dialog.favoriteCount) + " · "
                        + qsTr("%n group(s)", "", dialog.groupCount)
+                       + (dialog.trackCount > 0 ? " · " + qsTr("%n track(s)", "", dialog.trackCount) : "")
             }
 
             ComboBox {

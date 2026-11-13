@@ -1,6 +1,6 @@
 # Sailwave – Privacy Policy
 
-Last updated: 2 October 2026
+Last updated: 9 November 2026
 
 Sailwave is an internet radio app for Sailfish OS. This policy explains which data the app stores on your device and which online services it contacts.
 
@@ -20,16 +20,16 @@ Sailwave is an internet radio app for Sailfish OS. This policy explains which da
 | Station history and track history | "Station history" on the start page, track history with song titles | In the app ("Clear station history", "Clear track history", single entries via "Remove from history"); saving the track history can be turned off in the settings ("Save track history") |
 | Settings | Your choices in the app | Uninstalling the app |
 | Station logos and album covers (cache) | Faster display, less data traffic | Settings → "Clear cache" |
-| Favorites backups (`Documents/Sailwave`) | Automatic backup, manual backup, M3U export | With a file manager; they are **not** removed when uninstalling |
-| WebDAV password (only if a WebDAV server is set up) | Sign-in to your WebDAV server | Stored encrypted in the system's secure storage (Sailfish Secrets), not in the app's database; removed when you clear the password field |
+| Favorites backups (`Documents/Sailwave`) | Automatic backup, manual backup (also with the last track-history entries), M3U export | With a file manager; they are **not** removed when uninstalling |
+| WebDAV password (only if a WebDAV server is set up) | Sign-in to your WebDAV server; with "Sign in with Nextcloud" your Nextcloud hands Sailwave an app password after you confirmed in the browser (Login Flow v2) – Sailwave only talks to the server address you entered | Stored encrypted in the system's secure storage (Sailfish Secrets), not in the app's database; removed when you clear the password field |
 
 ## Online services the app contacts
 
-Every request includes your IP address and the app's identifier `harbour-sailwave/<version>` (User-Agent). The services process this data under their own privacy policies.
+Every request includes your IP address. Requests of the app's own code carry the identifier `harbour-sailwave/<version>` as User-Agent where the system allows it; images (logos, covers) and the audio stream itself are loaded by the system's components and may carry a generic identifier instead. The services process this data under their own privacy policies.
 
 ### radio-browser.info (station database)
 - **When:** loading top stations, searching, station info, checking whether favorites still work.
-- **What:** your search terms and filters; when you **play** a station, a "click" for that station is counted (station ID only); when you **vote** for a station – manually, or automatically when you save a favorite (setting "Vote when saving a favorite", on by default) – a vote for that station is sent.
+- **What:** your search terms and filters; the IDs of your favorite stations (when the app starts and then every six hours, to see whether they are still listed, and when restoring a backup – for stations that are no longer listed under their ID, the stream address and then the exact name with the country code are sent to look for the same station); when you **play** a station, or skip to another favorite, a "click" for that station is counted (station ID only); when you **vote** for a station – manually, or automatically when you save a favorite (setting "Vote when saving a favorite", on by default) – a vote for that station is sent.
 - Website: https://www.radio-browser.info
 
 ### The radio stations
@@ -43,7 +43,7 @@ Every request includes your IP address and the app's identifier `harbour-sailwav
 
 ### iTunes Search API (Apple) – optional
 - **When:** only if "Song details from iTunes" is turned on (on by default; can be turned off in the settings).
-- **What:** artist and title of the song currently playing, and the store country derived from your device's language settings, are sent to Apple to look up the album cover, album name and genre. The cover image is then loaded from Apple's servers.
+- **What:** the text the station sends as the current title (normally "artist - title"; some stations send slogans or news in the same field, and such text is sent as well), and the store country derived from your device's language settings, are sent to Apple to look up the album cover, album name and genre. The cover image is then loaded from Apple's servers.
 - Privacy policy: https://www.apple.com/legal/privacy/
 
 ### Country detection – only if no home country is set
@@ -60,7 +60,7 @@ Tapping a station's homepage (or other links) opens your web browser; from then 
 
 ## Permissions
 
-Sailwave runs in the Sailfish OS sandbox (Sailjail) and only asks for: Internet, Audio (playback and lock screen controls), Documents (backups in `Documents/Sailwave`), Downloads (choosing a backup file from Downloads) and Secrets (encrypted storage of the WebDAV password).
+Sailwave runs in the Sailfish OS sandbox (Sailjail) and only asks for: Internet, Audio (playback, lock screen controls, and pausing other players that are playing – Sailwave asks them to pause when it starts, it does not read what they play), Documents (backups in `Documents/Sailwave`), Downloads (choosing a backup file from Downloads) and Secrets (encrypted storage of the WebDAV password).
 
 ## Your rights
 

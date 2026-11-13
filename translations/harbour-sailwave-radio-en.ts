@@ -16,27 +16,15 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Internet radio for Sailfish OS - thousands of stations from all over the world.</source>
+        <source>Internet radio for Sailfish OS – thousands of stations from all over the world: stations for you, search by genre, language and country, favorites with groups and tiles, track history with covers, sleep timer and backup.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>License</source>
+        <source>License and source code</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Data sources</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Station data from the community database %1. Station logos from the stations&apos; websites, missing ones via Google&apos;s favicon service (can be turned off in the settings). Album covers and genres from the iTunes Search API (can be turned off in the settings). Home country detected via ipapi.co or api.country.is (only while set to automatic in the settings).</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Development</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Developed with the assistance of an AI model (Claude by Anthropic). All changes are reviewed and tested by the developer on a Jolla Phone (2026).</source>
+        <source>Free software under the GNU General Public License, version 3 or later.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -51,11 +39,35 @@
         <source>Report a problem</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Thanks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Station data: the community database %1. Covers and genres: iTunes Search API. Logos: the stations&apos; websites. What is sent to whom can be checked and switched off in the settings under Privacy.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Development</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Developed with the assistance of an AI model (Claude by Anthropic). All changes are reviewed and tested by the developer on a Jolla Phone (2026).</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AdvancedSearchFilter</name>
     <message>
-        <source>Filter</source>
+        <source>Filter genres</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter languages</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter countries</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -79,6 +91,10 @@
     </message>
     <message>
         <source>Active filters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear filters</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -138,6 +154,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Type a search term or choose genres, languages or countries. The results appear here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Could not reach the station database</source>
         <translation type="unfinished"></translation>
     </message>
@@ -160,6 +180,17 @@
     <message>
         <source>Search results appear at the bottom of the page</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1+ results</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n result(s)</source>
+        <translation>
+            <numerusform>%n result</numerusform>
+            <numerusform>%n results</numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -272,45 +303,7 @@
     </message>
 </context>
 <context>
-    <name>FavoriteTilesPage</name>
-    <message>
-        <source>Other favorites</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Manage favorites</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Favorites</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Station info</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No favorites yet</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Tap the heart next to a station to add it to your favorites.</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>FavoritesBackup</name>
-    <message numerus="yes">
-        <source>%n favorite(s) added from the server</source>
-        <translation>
-            <numerusform>%n favorite added from the server</numerusform>
-            <numerusform>%n favorites added from the server</numerusform>
-        </translation>
-    </message>
     <message>
         <source>WebDAV sign-in failed</source>
         <translation type="unfinished"></translation>
@@ -327,23 +320,16 @@
         <source>The file on the server is not a Sailwave favorites file</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>%n favorite(s) added from the server</source>
+        <translation>
+            <numerusform>%n favorite added from the server</numerusform>
+            <numerusform>%n favorites added from the server</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>FavoritesPage</name>
-    <message numerus="yes">
-        <source>Deleting %n item(s)</source>
-        <translation>
-            <numerusform>Deleting %n item</numerusform>
-            <numerusform>Deleting %n items</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n selected</source>
-        <translation>
-            <numerusform>%n selected</numerusform>
-            <numerusform>%n selected</numerusform>
-        </translation>
-    </message>
     <message>
         <source>Other favorites</source>
         <translation type="unfinished"></translation>
@@ -355,6 +341,13 @@
     <message>
         <source>Rename group</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Deleting %n item(s)</source>
+        <translation>
+            <numerusform>Deleting %n item</numerusform>
+            <numerusform>Deleting %n items</numerusform>
+        </translation>
     </message>
     <message>
         <source>Sync now</source>
@@ -379,6 +372,13 @@
     <message>
         <source>Delete selected</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n selected</source>
+        <translation>
+            <numerusform>%n selected</numerusform>
+            <numerusform>%n selected</numerusform>
+        </translation>
     </message>
     <message>
         <source>Manage favorites</source>
@@ -442,9 +442,117 @@
     </message>
 </context>
 <context>
+    <name>FavoriteTilesPage</name>
+    <message>
+        <source>Other favorites</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Manage favorites</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Favorites</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Station info</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No favorites yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tap the heart next to a station to add it to your favorites.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>GroupNameDialog</name>
     <message>
         <source>Group name</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GroupStationsDialog</name>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>now in %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>harbour-sailwave</name>
+    <message>
+        <source>Added to Other favorites. Press and hold the station to move it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Added to favorites</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Station not reachable. Check your connection and tap play to try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vote counted, thank you!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vote not possible, no connection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vote not possible (already voted?)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Favorites</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sailwave</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track history</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Advanced search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Sleep timer: %n min</source>
+        <translation>
+            <numerusform>Sleep timer: %n min</numerusform>
+            <numerusform>Sleep timer: %n min</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Tap the station name for station info</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tap the arrow for recent tracks and the sleep timer</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -504,27 +612,6 @@
 <context>
     <name>RestoreConfirmDialog</name>
     <message numerus="yes">
-        <source>%n favorite(s) added</source>
-        <translation>
-            <numerusform>%n favorite added</numerusform>
-            <numerusform>%n favorites added</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n favorite(s)</source>
-        <translation>
-            <numerusform>%n favorite</numerusform>
-            <numerusform>%n favorites</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n group(s)</source>
-        <translation>
-            <numerusform>%n group</numerusform>
-            <numerusform>%n groups</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
         <source>%n favorite(s) will be added</source>
         <translation>
             <numerusform>%n favorite will be added</numerusform>
@@ -567,6 +654,13 @@
         <source>Favorites restored</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>%n favorite(s) added</source>
+        <translation>
+            <numerusform>%n favorite added</numerusform>
+            <numerusform>%n favorites added</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Restore favorites</source>
         <translation type="unfinished"></translation>
@@ -578,6 +672,27 @@
     <message>
         <source>Content</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n favorite(s)</source>
+        <translation>
+            <numerusform>%n favorite</numerusform>
+            <numerusform>%n favorites</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n group(s)</source>
+        <translation>
+            <numerusform>%n group</numerusform>
+            <numerusform>%n groups</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n track(s)</source>
+        <translation>
+            <numerusform>%n track</numerusform>
+            <numerusform>%n tracks</numerusform>
+        </translation>
     </message>
     <message>
         <source>Restore mode</source>
@@ -610,20 +725,6 @@
 </context>
 <context>
     <name>RestorePage</name>
-    <message numerus="yes">
-        <source>%n favorite(s)</source>
-        <translation>
-            <numerusform>%n favorite</numerusform>
-            <numerusform>%n favorites</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n group(s)</source>
-        <translation>
-            <numerusform>%n group</numerusform>
-            <numerusform>%n groups</numerusform>
-        </translation>
-    </message>
     <message>
         <source>Loading …</source>
         <translation type="unfinished"></translation>
@@ -653,6 +754,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Before a restore</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Before deleting the group &quot;%1&quot;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Before deleting a group</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Deleting backup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>This file is not a Sailwave favorites backup</source>
         <translation type="unfinished"></translation>
     </message>
@@ -663,6 +780,24 @@
     <message>
         <source>Automatic backups</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n favorite(s)</source>
+        <translation>
+            <numerusform>%n favorite</numerusform>
+            <numerusform>%n favorites</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n group(s)</source>
+        <translation>
+            <numerusform>%n group</numerusform>
+            <numerusform>%n groups</numerusform>
+        </translation>
     </message>
     <message>
         <source>No automatic backups yet</source>
@@ -705,100 +840,45 @@
     </message>
 </context>
 <context>
-    <name>SettingsPage</name>
-    <message numerus="yes">
-        <source>%n tracks</source>
-        <translation>
-            <numerusform>%n track</numerusform>
-            <numerusform>%n tracks</numerusform>
-        </translation>
-    </message>
+    <name>SettingsBackupPage</name>
     <message>
-        <source>Settings</source>
+        <source>never</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Playback</source>
+        <source>Signed in as %1 – checking the connection …</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Play last station on start</source>
+        <source>Connection successful</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Starts playing the most recently heard station as soon as the app opens.</source>
+        <source>Connection failed – check the URL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Fade out</source>
+        <source>Invalid server address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Lowers the volume slowly during the last 30 seconds of the sleep timer.</source>
+        <source>No Nextcloud found at this address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Stay within favorite group</source>
+        <source>Server not reachable</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Next and previous (cover, lock screen, headset, car) only switch between the favorites in the playing station&apos;s group. When off: through all favorites.</source>
+        <source>The server did not start the sign-in – is it a Nextcloud?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Favorite tiles</source>
+        <source>The sign-in in the browser was not completed in time</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Large tiles of the favorites as an extra page left of the start page, e.g. for the car.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Off</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Always</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Only in landscape</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Open when turning to landscape</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Shows the favorite tiles as soon as the phone is turned to landscape.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Discover</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Home country</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Automatic (%1)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Automatic</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Used for top stations and recommendations. When set to automatic, the country is detected from the IP address via ipapi.co.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Vote when saving a favorite</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Automatically votes for the station on radio-browser.info when it is saved as a favorite. This supports the Radio Browser community. At most one vote per station and day.</source>
+        <source>The server sent an incomplete answer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -806,7 +886,47 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>On this phone</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Favorites are always backed up on this device (Documents/Sailwave, last 5 states).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Last automatic backup: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Last backup file: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Back up now</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Backup saved as %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Backup could not be saved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Back up and share …</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore …</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New phone: share a backup (or use a WebDAV server) and restore it there. The copies on this device stay on this device.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your own server</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -823,6 +943,22 @@
     </message>
     <message>
         <source>Nextcloud and ownCloud: the server address is enough (e.g. https://cloud.example.com). Other WebDAV storage: the full folder address.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sign in with the browser</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Waiting for the login in the browser …</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Or enter the user name and an app password by hand:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -858,23 +994,211 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Connection successful</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Sign-in failed – check user name and password</source>
         <translation type="unfinished"></translation>
     </message>
+</context>
+<context>
+    <name>SettingsDiscoverPage</name>
     <message>
-        <source>Server not reachable</source>
+        <source>Discover</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Connection failed – check the URL</source>
+        <source>Home country</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Automatic (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Automatic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Used for top stations and recommendations. When set to automatic, the country is detected from the IP address via ipapi.co.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vote when saving a favorite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Automatically votes for the station on radio-browser.info when it is saved as a favorite. This supports the Radio Browser community. At most one vote per station and day.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>SettingsPage</name>
+    <message>
+        <source>always</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>only in landscape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>About Sailwave</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Playback</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>plays last station on start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>next/previous within group</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>tiles: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Discover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Automatic (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Automatic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>votes for new favorites</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>no automatic votes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Backup and sync</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>WebDAV sync</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>WebDAV backups</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>on this device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>last backup %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>never</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Privacy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>sends data to %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>no data sent to Apple or Google</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>track history on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>track history off</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>SettingsPlaybackPage</name>
+    <message>
+        <source>Playback</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play last station on start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starts the last heard station when the app opens.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lowers the volume during the last 30 seconds of the sleep timer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stay within favorite group</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next and previous (cover, lock screen, headset) stay in the playing station&apos;s group. Off: through all favorites.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Favorite tiles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Large tiles as an extra page left of the start page, e.g. for the car.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Always</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Only in landscape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open when turning to landscape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opens the tiles when the phone is turned to landscape.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>SettingsPrivacyPage</name>
+    <message>
+        <source>Privacy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sent to other services</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -894,6 +1218,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>On this device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Save track history</source>
         <translation type="unfinished"></translation>
     </message>
@@ -904,6 +1232,13 @@
     <message>
         <source>Track history length</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n tracks</source>
+        <translation>
+            <numerusform>%n track</numerusform>
+            <numerusform>%n tracks</numerusform>
+        </translation>
     </message>
     <message>
         <source>Clear track history</source>
@@ -930,7 +1265,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>About Sailwave</source>
+        <source>The detection of the home country and the automatic votes (radio-browser.info) are set under Discover.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -946,20 +1281,6 @@
 </context>
 <context>
     <name>StationInfoPage</name>
-    <message numerus="yes">
-        <source>%Ln votes</source>
-        <translation>
-            <numerusform>%Ln vote</numerusform>
-            <numerusform>%Ln votes</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%Ln clicks</source>
-        <translation>
-            <numerusform>%Ln click</numerusform>
-            <numerusform>%Ln clicks</numerusform>
-        </translation>
-    </message>
     <message>
         <source>Find alternative</source>
         <translation type="unfinished"></translation>
@@ -981,11 +1302,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Station properties</source>
+        <source>Votes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Country</source>
+        <source>Plays</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -993,11 +1314,43 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Language</source>
+        <source>Format</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Codec / bitrate</source>
+        <source>Voted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vote for this station</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Voting for this station is possible again tomorrow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Last voted on %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record track titles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch off for stations that only send text, such as news.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>About this station</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Country</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Language</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1021,11 +1374,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Voting for this station is possible again tomorrow</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Last voted on %1</source>
+        <source>Source: radio-browser.info</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1038,6 +1387,10 @@
     </message>
     <message>
         <source>Similar stations</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This station has no tags, so popular stations of its country are shown.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1092,6 +1445,14 @@
     </message>
     <message>
         <source>Search stations</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Advanced</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Last heard</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1167,11 +1528,15 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Top stations</source>
+        <source>Top stations for you</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Groups, backup and more: pull down and choose &quot;Manage favorites&quot;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Press and hold a station for more options</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1191,6 +1556,30 @@
     </message>
     <message>
         <source>Search track history</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show station</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record this station again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Do not record this station</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete tracks of this station</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Deleting tracks</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1258,33 +1647,6 @@
     <name>TrackPreview</name>
     <message>
         <source>Open track history</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>harbour-sailwave</name>
-    <message>
-        <source>Station not reachable. Check your connection and tap play to try again.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Vote counted, thank you!</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Vote not possible, no connection</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Vote not possible (already voted?)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Tap the station name for station info</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Tap the arrow for recent tracks and the sleep timer</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

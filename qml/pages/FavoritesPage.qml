@@ -194,10 +194,23 @@ Page {
     }
 
     // --- Actions ---
+    // After the name: straight on to choosing the stations of the group (as
+    // "New folder" in Sailcast) - the dialog replaces itself with that page,
+    // which gets the new id. Without any favourite there is nothing to choose.
     function newGroup() {
-        var dialog = pageStack.push(Qt.resolvedUrl("GroupNameDialog.qml"), { title: qsTr("New group") })
+        var props = { title: qsTr("New group") }
+        if (appWindow.favoritesStore.favorites.length > 0) {
+            props.acceptDestination = Qt.resolvedUrl("GroupStationsDialog.qml")
+            props.acceptDestinationAction = PageStackAction.Replace
+        }
+        var dialog = pageStack.push(Qt.resolvedUrl("GroupNameDialog.qml"), props)
         dialog.accepted.connect(function() {
-            appWindow.favoritesStore.createGroup(dialog.groupName)
+            var id = appWindow.favoritesStore.createGroup(dialog.groupName)
+            var target = dialog.acceptDestinationInstance
+            if (target) {
+                target.groupId = id
+                target.groupName = dialog.groupName
+            }
         })
     }
 
@@ -268,8 +281,28 @@ Page {
             }
         }
 
-        header: PageHeader {
-            title: page.selecting ? qsTr("%n selected", "", page.selectedCount) : qsTr("Manage favorites")
+        header: Column {
+            width: listView.width
+
+            PageHeader {
+                title: page.selecting ? qsTr("%n selected", "", page.selectedCount) : qsTr("Manage favorites")
+            }
+
+            // Visible entry for new groups (the pulley menu has it too, but
+            // a pulley is not seen by newcomers)
+            Item {
+                width: parent.width
+                height: newGroupPill.height + Theme.paddingSmall
+                visible: !page.selecting
+
+                // The pill of Sailcast (ActionPill) instead of a plain row with a plus
+                ActionPill {
+                    id: newGroupPill
+                    x: Theme.horizontalPageMargin
+                    text: qsTr("New group")
+                    onClicked: page.newGroup()
+                }
+            }
         }
 
         displaced: Transition {
@@ -352,7 +385,8 @@ Page {
                     anchors.verticalCenter: parent.verticalCenter
                     x: item.selectable ? Theme.horizontalPageMargin + selectMark.width + Theme.paddingMedium
                                        : Theme.horizontalPageMargin
-                    iconSize: Theme.iconSizeSmall
+                    // 48 px like the station rows of the other pages
+                    iconSize: Math.round(Theme.iconSizeSmall * 1.2)
                     faviconUrl: model.favicon
                     homepageUrl: model.homepage
                     stationuuid: model.stationuuid
@@ -456,9 +490,10 @@ Page {
                             var id = model.groupId
                             var store = appWindow.favoritesStore
                             var backup = appWindow.favoritesBackup
+                            var groupLabel = store.groupName(id)
                             remorse.execute(qsTr("Deleting group and favorites"), function() {
                                 // Backup state first, so it can be restored
-                                backup.save(true)
+                                backup.save(true, false, "delete-group", groupLabel)
                                 store.deleteGroup(id, true)
                             })
                         }

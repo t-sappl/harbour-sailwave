@@ -413,6 +413,13 @@ Item {
         })
     }
 
+    // All entries of one station (context menu of a station in the track history)
+    function deleteTrackHistoryOfStation(stationName) {
+        db().transaction(function(tx) {
+            tx.executeSql("DELETE FROM track_history WHERE station_name = ?", [stationName || ""])
+        })
+    }
+
     function getTrackHistory(limit) {
         var list = []
         db().transaction(function(tx) {
@@ -594,6 +601,58 @@ Item {
 
     // --- Track history for a single station (matched by name, since the
     // track history does not carry a stationuuid) ---
+
+    // For the backup: all track-history rows (newest first), plain values
+    function exportTrackHistory() {
+        var list = []
+        db().transaction(function(tx) {
+            var result = tx.executeSql(
+                "SELECT title, station_name, stationuuid, favicon, url, url_resolved, homepage, " +
+                "art_url, album_name, genre, itunes_artist, itunes_title, timestamp " +
+                "FROM track_history ORDER BY timestamp DESC LIMIT ?", [trackHistoryLimit])
+            for (var i = 0; i < result.rows.length; i++) {
+                var r = result.rows.item(i)
+                list.push({
+                    title: r.title || "", stationName: r.station_name || "",
+                    stationuuid: r.stationuuid || "", favicon: r.favicon || "",
+                    url: r.url || "", url_resolved: r.url_resolved || "",
+                    homepage: r.homepage || "", artUrl: r.art_url || "",
+                    albumName: r.album_name || "", genre: r.genre || "",
+                    itunesArtist: r.itunes_artist || "", itunesTitle: r.itunes_title || "",
+                    timestamp: r.timestamp
+                })
+            }
+        })
+        return list
+    }
+
+    // Restoring a backup: adds the rows that do not exist yet (same title,
+    // station and time), nothing is deleted; afterwards the table is cut to
+    // trackHistoryLimit again. Returns the number of rows added.
+    function importTrackHistory(list) {
+        var added = 0
+        if (!list || list.length === 0) return 0
+        db().transaction(function(tx) {
+            for (var i = 0; i < list.length; i++) {
+                var t = list[i]
+                var exists = tx.executeSql(
+                    "SELECT id FROM track_history WHERE title = ? AND station_name = ? AND timestamp = ?",
+                    [t.title, t.stationName, t.timestamp])
+                if (exists.rows.length > 0) continue
+                tx.executeSql(
+                    "INSERT INTO track_history (title, station_name, stationuuid, favicon, url, url_resolved, " +
+                    "homepage, art_url, album_name, genre, itunes_artist, itunes_title, timestamp) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    [t.title, t.stationName, t.stationuuid, t.favicon, t.url, t.url_resolved,
+                     t.homepage, t.artUrl, t.albumName, t.genre, t.itunesArtist, t.itunesTitle, t.timestamp])
+                added++
+            }
+            tx.executeSql(
+                "DELETE FROM track_history WHERE id NOT IN " +
+                "(SELECT id FROM track_history ORDER BY timestamp DESC LIMIT ?)", [trackHistoryLimit])
+        })
+        return added
+    }
 
     function getTrackHistoryForStation(stationName, limit) {
         var list = []

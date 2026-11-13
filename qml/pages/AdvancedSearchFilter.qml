@@ -38,7 +38,10 @@ Column {
 
     SearchField {
         width: parent.width
-        placeholderText: qsTr("Filter")
+        // Says what is filtered: this field narrows the chips below, the
+        // field at the top of the page searches stations
+        placeholderText: chooser.kind === "genres" ? qsTr("Filter genres")
+                         : (chooser.kind === "languages" ? qsTr("Filter languages") : qsTr("Filter countries"))
         inputMethodHints: Qt.ImhNoAutoUppercase
         EnterKey.iconSource: "image://theme/icon-m-enter-close"
         EnterKey.onClicked: focus = false

@@ -23,6 +23,7 @@ INCLUDEPATH += /usr/include/Sailfish
 
 SOURCES += src/harbour-sailwave.cpp \
     src/artcomposer.cpp \
+    src/nextcloudlogin.cpp \
     src/secretstore.cpp \
     src/webdavclient.cpp
 
@@ -30,6 +31,7 @@ HEADERS += \
     src/artcomposer.h \
     src/filehelper.h \
     src/networkaccess.h \
+    src/nextcloudlogin.h \
     src/secretstore.h \
     src/webdavclient.h
 
@@ -45,10 +47,18 @@ OTHER_FILES += rpm/harbour-sailwave-radio.spec \
     qml/FilterChip.qml \
     qml/FilterSection.qml \
     qml/MprisIntegration.qml \
+    qml/MprisOthers.qml \
     qml/PersistentState.qml \
     qml/PlayerBar.qml \
     qml/PlayerPanel.qml \
     qml/RingHint.qml \
+    qml/RowPlayButton.qml \
+    qml/FoldChevron.qml \
+    qml/StatTiles.qml \
+    qml/RingNeighbours.qml \
+    qml/PageArrow.qml \
+    qml/ActionPill.qml \
+    qml/SettingsEntry.qml \
     qml/MessageBanner.qml \
     qml/SleepBadge.qml \
     qml/SleepTimer.qml \
@@ -69,10 +79,15 @@ OTHER_FILES += rpm/harbour-sailwave-radio.spec \
     qml/pages/FavoriteTilesPage.qml \
     qml/pages/FavoritesPage.qml \
     qml/pages/GroupNameDialog.qml \
+    qml/pages/GroupStationsDialog.qml \
     qml/pages/HomepageDialog.qml \
     qml/pages/RestoreConfirmDialog.qml \
     qml/pages/RestorePage.qml \
     qml/pages/SettingsPage.qml \
+    qml/pages/SettingsPlaybackPage.qml \
+    qml/pages/SettingsDiscoverPage.qml \
+    qml/pages/SettingsBackupPage.qml \
+    qml/pages/SettingsPrivacyPage.qml \
     qml/pages/StationInfoPage.qml \
     qml/pages/SyncConflictPage.qml \
     qml/pages/TopStationsPage.qml \

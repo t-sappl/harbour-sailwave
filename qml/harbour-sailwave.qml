@@ -12,6 +12,9 @@ ApplicationWindow {
 
     property var currentStation: null
     property bool isPlaying: player.playbackState === MediaPlayer.PlayingState
+    // Paused (not stopped): comes from the user (button, headset, MPRIS, sleep
+    // timer). Internal restarts (reconnect, station change) use stop().
+    readonly property bool isPausedByUser: player.playbackState === MediaPlayer.PausedState
     property bool isBuffering: player.status === MediaPlayer.Buffering || player.status === MediaPlayer.Stalled
 
     // Current song title from the stream's ICY metadata (empty if the station sends none)
@@ -59,6 +62,23 @@ ApplicationWindow {
     // re-evaluate.
     property int brokenIconRevision: 0
 
+    // (v128l) Look of a station logo, analysed once per URL by StationIcon
+    // (16x16 pixel check): { tile: bool, dark: bool }. Missing entry = not
+    // analysed yet -> StationIcon shows the safe default (light tile).
+    property var logoLooks: ({})
+    property int logoLookRevision: 0
+
+    function logoLook(url) {
+        return logoLookRevision >= 0 && url.length > 0 ? logoLooks[url] : undefined
+    }
+
+    function setLogoLook(url, look) {
+        if (url.length > 0) {
+            logoLooks[url] = look
+            logoLookRevision++
+        }
+    }
+
     function isIconUrlBroken(url) {
         return brokenIconRevision >= 0 && url.length > 0 && brokenIconUrls[url] === true
     }
@@ -72,7 +92,7 @@ ApplicationWindow {
 
     // App version number (for "About Sailwave" and the User-Agent).
     // Bump it with every release, together with the version in the .spec/.yaml.
-    readonly property string appVersion: "1.1.1"
+    readonly property string appVersion: "1.2"
 
     // radio-browser.info API etiquette: our own User-Agent instead of the Qt default
     property string apiUserAgent: "harbour-sailwave/" + appVersion
@@ -124,6 +144,17 @@ ApplicationWindow {
         id: favoritesStore
     }
 
+    // Feedback when a station is added: new favourites land in "Other
+    // favorites" once groups exist, and where they went was not visible
+    Connections {
+        target: favoritesStore
+        onFavoriteAdded: {
+            appWindow.showMessage(favoritesStore.groups.length > 0
+                                  ? qsTr("Added to Other favorites. Press and hold the station to move it.")
+                                  : qsTr("Added to favorites"))
+        }
+    }
+
     // Favourites backup, restore, M3U export and WebDAV sync (I3-I5)
     property alias favoritesBackup: favoritesBackupInstance
     FavoritesBackup {
@@ -149,7 +180,8 @@ ApplicationWindow {
         mediaPlayer: player
         fadeOut: appSettingsInstance.sleepFadeOut
         onExpired: {
-            if (appWindow.isPlaying) {
+            if (appWindow.isPlaying || stallTimer.running) {
+                stallTimer.stop()
                 player.pause()
             }
         }
@@ -230,6 +262,25 @@ ApplicationWindow {
         }
     }
 
+    // Pauses other MPRIS players (e.g. a podcast) when Sailwave starts
+    // playing - Sailfish has no audio focus. Optional, like the Loader above.
+    Loader {
+        id: mprisOthersLoader
+        source: "MprisOthers.qml"
+        asynchronous: false
+        onStatusChanged: {
+            if (status === Loader.Error) {
+                console.warn("MprisOthers not available - other players are not paused")
+            }
+        }
+    }
+
+    // Pauses other playing MPRIS players; returns how many (0 if the
+    // MprisOthers module is not available).
+    function pauseOtherPlayers() {
+        return mprisOthersLoader.item ? mprisOthersLoader.item.pauseOthers() : 0
+    }
+
     // Standalone, NOT inside MprisIntegration/MprisPlayer (see the
     // comment in CoverArtCache.qml for why this matters).
     CoverArtCache {
@@ -241,6 +292,15 @@ ApplicationWindow {
             if (rawTitle === appWindow.currentTrackTitle && cleanArtist.length > 0 && cleanTitle.length > 0) {
                 appWindow.currentItunesArtist = cleanArtist
                 appWindow.currentItunesTitle = cleanTitle
+            }
+            // Text without "Artist - Title" that the cover search recognised as a song
+            if (appWindow.pendingTextTrack && appWindow.pendingTextTrack.title === rawTitle
+                    && cleanArtist.length > 0 && cleanTitle.length > 0
+                    && appWindow.currentStation && appSettingsInstance.trackHistoryEnabled
+                    && !appWindow.isRecordingOff(appWindow.currentStation)
+                    && appWindow.pendingTextTrack.key === appWindow.stationRecordKey(appWindow.currentStation) + "|" + rawTitle) {
+                appWindow.logTrackTitle(rawTitle, appWindow.pendingTextTrack.key)
+                appWindow.pendingTextTrack = null
             }
             if (appWindow.currentStation && appSettingsInstance.trackHistoryEnabled) {
                 persistentState.setTrackDetails(rawTitle, appWindow.currentStation.name, artUrl, albumName, genre,
@@ -295,6 +355,14 @@ ApplicationWindow {
             attemptReconnect()
         }
 
+        // A pause (button, headset, MPRIS, sleep timer) must not be undone by a
+        // pending stall reconnect (it would call play() again)
+        onPlaybackStateChanged: {
+            if (playbackState === MediaPlayer.PausedState) {
+                stallTimer.stop()
+            }
+        }
+
         onStatusChanged: {
             if (status === MediaPlayer.Buffered || status === MediaPlayer.Playing) {
                 // Stream is stable again - reset the reconnect counter
@@ -317,18 +385,87 @@ ApplicationWindow {
     // TrackText.oneLine (currentTrackDisplay, iTunes search, previews).
     property string rawTrackTitle: TrackText.clean(player.metaData ? (player.metaData.title || "") : "")
 
+    // Last title written to the history (station + title): a short restart
+    // (reconnect, source swap) empties and refills the metadata, which must
+    // not create the same entry again; the station name itself (jingle,
+    // "no title") is no track either
+    property string lastLoggedTrack: ""
+
+    // "SRF 4 News" == "srf4news" == "SRF 4 News!": the same text apart from
+    // case, spaces and punctuation
+    function sameAsStationName(title, name) {
+        function plain(s) {
+            return String(s || "").toLowerCase().replace(/[^a-z0-9\u00c0-\uffff]+/g, "")
+        }
+        var t = plain(title)
+        return t.length > 0 && (t === plain(name) || t === plain(RadioApi.cleanName(name)))
+    }
+
+    // Stations that only send text (news, talk) are not recorded: a title is
+    // taken into the history at once only when it looks like music
+    // ("Artist - Title"); any other text only when the cover search then
+    // recognised it as a song (see CoverArtCache.onTrackArtResolved). The
+    // history can also be switched off per station (info page, history menu).
+    property var pendingTextTrack: null
+
+    function looksLikeTrack(title) {
+        return /\s[-\u2013\u2014]\s/.test(String(title || ""))
+    }
+
+    function stationRecordKey(station) {
+        return station ? (station.stationuuid || station.url || "") : ""
+    }
+
+    function isRecordingOff(station) {
+        var key = stationRecordKey(station)
+        return key.length > 0
+               && ("\n" + appSettingsInstance.noRecordStations + "\n").indexOf("\n" + key + "\n") >= 0
+    }
+
+    function setRecordingOff(station, off) {
+        var key = stationRecordKey(station)
+        if (key.length === 0) {
+            return
+        }
+        var list = appSettingsInstance.noRecordStations.split("\n").filter(function(k) {
+            return k.length > 0 && k !== key
+        })
+        if (off) {
+            list.push(key)
+        }
+        // the newest 300 are enough (the list stays small)
+        appSettingsInstance.noRecordStations = list.slice(-300).join("\n")
+    }
+
+    function logTrackTitle(title, trackKey) {
+        lastLoggedTrack = trackKey
+        persistentState.addTrackTitle(title, currentStation.name,
+                                       currentStation.stationuuid || "", currentStation.favicon || "",
+                                       currentStation.url || "", currentStation.url_resolved || "",
+                                       currentStation.homepage || "")
+        trackHistoryUpdated()
+    }
+
     onRawTrackTitleChanged: {
         if (rawTrackTitle.length > 0 && rawTrackTitle !== currentTrackTitle) {
             currentTrackTitle = rawTrackTitle
-            if (currentStation && appSettingsInstance.trackHistoryEnabled) {
-                persistentState.addTrackTitle(rawTrackTitle, currentStation.name,
-                                               currentStation.stationuuid || "", currentStation.favicon || "",
-                                               currentStation.url || "", currentStation.url_resolved || "",
-                                               currentStation.homepage || "")
-                trackHistoryUpdated()
+            pendingTextTrack = null
+            var trackKey = currentStation
+                           ? ((currentStation.stationuuid || currentStation.url || "") + "|" + rawTrackTitle)
+                           : ""
+            var isStationName = currentStation && sameAsStationName(rawTrackTitle, currentStation.name)
+            if (currentStation && appSettingsInstance.trackHistoryEnabled
+                    && trackKey !== lastLoggedTrack && !isStationName
+                    && !isRecordingOff(currentStation)) {
+                if (looksLikeTrack(rawTrackTitle)) {
+                    logTrackTitle(rawTrackTitle, trackKey)
+                } else {
+                    pendingTextTrack = { title: rawTrackTitle, key: trackKey }
+                }
             }
         } else if (rawTrackTitle.length === 0) {
             currentTrackTitle = ""
+            pendingTextTrack = null
         }
     }
 
@@ -340,6 +477,11 @@ ApplicationWindow {
 
     function attemptReconnect() {
         if (!currentStation) {
+            return
+        }
+        // Paused by the user: no reconnect (it would start playback again)
+        if (player.playbackState === MediaPlayer.PausedState) {
+            stallTimer.stop()
             return
         }
         if (reconnectAttempts >= maxReconnectAttempts) {
@@ -382,18 +524,45 @@ ApplicationWindow {
     // changed since the list was loaded. radio-browser.info counts the click only
     // once per station and IP per 24h anyway - playback still starts immediately
     // with the already known url_resolved, so there is no waiting time.
+    // Compares stream URLs without being fooled by percent-encoding, upper
+    // case host names or a trailing slash (QUrl.toString() decodes them)
+    function normalizedUrl(u) {
+        var s = String(u || "")
+        try {
+            s = decodeURI(s)
+        } catch (e) {
+        }
+        s = s.toLowerCase()
+        while (s.length > 0 && s.charAt(s.length - 1) === "/") {
+            s = s.substring(0, s.length - 1)
+        }
+        return s
+    }
+
+    property int clickRequestId: 0
+
     function registerClick(station) {
         if (!station.stationuuid) {
             return
         }
+        var myClickId = ++clickRequestId
         RadioApi.requestJson(RadioApi.apiUrl("url/" + station.stationuuid), apiUserAgent, function(response) {
             if (response) {
                 try {
                     var freshUrl = response.url
-                    var stillCurrent = currentStation
+                    // Only if this is still the latest request, the station is
+                    // still current and playing (a late reply must not restart
+                    // a paused or stopped player)
+                    var stillCurrent = myClickId === clickRequestId
+                                        && currentStation
                                         && currentStation.stationuuid === station.stationuuid
+                                        && player.playbackState === MediaPlayer.PlayingState
+                    var knownUrl = normalizedUrl(player.source.toString())
                     if (response.ok === true && freshUrl && stillCurrent
-                        && freshUrl !== player.source.toString()) {
+                        && /^(https?|rtsp|mms):\/\//i.test(String(freshUrl))
+                        && normalizedUrl(freshUrl) !== knownUrl
+                        && normalizedUrl(freshUrl) !== normalizedUrl(station.url_resolved)
+                        && normalizedUrl(freshUrl) !== normalizedUrl(station.url)) {
                         player.stop()
                         player.source = freshUrl
                         player.play()
@@ -515,6 +684,18 @@ ApplicationWindow {
             pages.unshift(favoriteTilesPage())
         }
         return pages
+    }
+
+    // Title of a ring page as shown in its header (for the neighbour line)
+    function ringPageTitle(page) {
+        if (!page) return ""
+        switch (page.objectName) {
+        case "ringFavoriteTiles": return qsTr("Favorites")
+        case "ringTopStations": return qsTr("Sailwave")
+        case "ringTrackHistory": return qsTr("Track history")
+        case "ringAdvancedSearch": return qsTr("Advanced search")
+        }
+        return ""
     }
 
     // Every page has exactly one right-hand neighbour.
@@ -824,6 +1005,29 @@ ApplicationWindow {
     }
 
     // Short message at the bottom of the screen (see MessageBanner.qml)
+    // "…" in the sleep timer row: any duration (hours and minutes), as in
+    // Sailcast; the last chosen one is remembered
+    function chooseSleepTime() {
+        var last = appSettingsInstance.sleepTimerMinutes
+        if (isNaN(last) || last <= 0) {
+            last = 30
+        }
+        var dialog = pageStack.push("Sailfish.Silica.TimePickerDialog", {
+                                        hourMode: DateTime.TwentyFourHours,
+                                        hour: Math.floor(last / 60),
+                                        minute: last % 60
+                                    })
+        dialog.accepted.connect(function() {
+            var minutes = dialog.hour * 60 + dialog.minute
+            if (minutes <= 0) {
+                return
+            }
+            appSettingsInstance.sleepTimerMinutes = minutes
+            sleepTimerInstance.start(minutes)
+            showMessage(qsTr("Sleep timer: %n min", "", minutes))
+        })
+    }
+
     function showMessage(text) {
         messageBanner.show(text)
     }
@@ -831,6 +1035,8 @@ ApplicationWindow {
     function stopPlayback() {
         player.stop()
         stallTimer.stop()
+        // A running sleep timer belongs to the stopped station
+        sleepTimerInstance.cancel()
         currentStation = null
         currentTrackTitle = ""
         persistentState.clearLastStation()
@@ -1055,6 +1261,7 @@ ApplicationWindow {
             // Centred over the page area (left of the player panel in landscape)
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.horizontalCenterOffset: -appWindow.playerPanelWidth / 2
+            width: parent.width - appWindow.playerPanelWidth - 2 * Theme.horizontalPageMargin
             anchors.bottom: appWindow.landscapeLayout ? parent.bottom : playerBar.top
             anchors.bottomMargin: Theme.paddingLarge
             z: 101

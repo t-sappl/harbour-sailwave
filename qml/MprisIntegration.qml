@@ -72,6 +72,14 @@ MprisPlayer {
     // paused: switching then starts the new station, like the cover action
     onNextRequested: appWindow.playNextFavorite()
     onPreviousRequested: appWindow.playPrevFavorite()
-    onPlayPauseRequested: appWindow.togglePlayback()
+    // Headset key (play/pause) while Sailwave is paused: Sailfish sends it
+    // here even if another player (e.g. a podcast) is the one playing. The
+    // key then means "pause that one", so Sailwave must not start itself.
+    onPlayPauseRequested: {
+        if (!appWindow.isPlaying && appWindow.pauseOtherPlayers() > 0) {
+            return
+        }
+        appWindow.togglePlayback()
+    }
     onStopRequested: appWindow.stopPlayback()
 }

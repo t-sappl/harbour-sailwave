@@ -10,6 +10,8 @@ Page {
     readonly property string apiBase: RadioApi.apiUrl("stations/")
     property string userCountry: ""
     property bool searchMode: false
+    // The search field of the list header (set by the field itself)
+    property var searchFieldItem: null
 
     // Error / empty states (shown below the list, see footer)
     property bool topLoadFailed: false   // top stations could not be loaded at all
@@ -92,11 +94,17 @@ Page {
     property bool ringMember: false
 
     onStatusChanged: {
+        if (status === PageStatus.Active) {
+            healStrictCheck()
+        }
         if (ringMember && status === PageStatus.Active) {
             appWindow.ringPageActivated(page)
+            longPressHintTimer.restart()
         }
         if (status !== PageStatus.Active) {
             sortMode = false
+            longPressHintTimer.stop()
+            longPressHint.dismiss()
         }
     }
 
@@ -135,10 +143,15 @@ Page {
 
         header: Column {
             width: parent.width
+            // (v129) The header grows after the start (rows that appear later):
+            // keep a page that is at the top at the top of the header
+            onHeightChanged: page.headerHeightChanged()
 
             PageHeader {
                 title: qsTr("Sailwave")
             }
+
+            RingNeighbours { ringPage: page }
 
             Row {
                 width: parent.width
@@ -146,10 +159,14 @@ Page {
 
                 SearchField {
                     id: searchField
-                    width: parent.width - advancedSearchButton.width - parent.spacing - (2 * Theme.horizontalPageMargin)
-                    x: Theme.horizontalPageMargin
+                    // The Row places its children itself (x has no effect): the
+                    // chip's pill ends at the page margin, like the star and the
+                    // play disc below (the chip box is paddingSmall wider)
+                    width: parent.width - advancedSearchButton.width - parent.spacing
+                           - Theme.horizontalPageMargin + Theme.paddingSmall / 2
                     placeholderText: qsTr("Search stations")
                     EnterKey.iconSource: "image://theme/icon-m-search"
+                    Component.onCompleted: page.searchFieldItem = searchField
                     EnterKey.onClicked: {
                         searchTimer.stop()
                         searchStations(searchField.text)
@@ -176,11 +193,75 @@ Page {
                     }
                 }
 
-                IconButton {
+                // Chip as "More options" in Sailcast; opens the advanced search
+                FilterChip {
                     id: advancedSearchButton
                     anchors.verticalCenter: searchField.verticalCenter
-                    icon.source: "image://theme/icon-m-levels"
+                    text: qsTr("Advanced") + " \u203a"
                     onClicked: pageStack.push(Qt.resolvedUrl("AdvancedSearchPage.qml"), { initialSearchText: searchField.text })
+                }
+            }
+
+            // Last heard: one row with the station to continue with
+            BackgroundItem {
+                id: lastHeardItem
+                width: parent.width
+                height: visible ? Math.max(Theme.itemSizeMedium, lastHeardColumn.height + 2 * Theme.paddingMedium) : 0
+                visible: !page.searchMode && !page.sortMode && page.lastHeard !== null
+                onClicked: {
+                    var s = page.lastHeard
+                    appWindow.playStation({
+                        name: s.name, url: s.url, url_resolved: s.url_resolved, country: s.country,
+                        codec: s.codec, bitrate: s.bitrate, stationuuid: s.stationuuid,
+                        favicon: s.favicon, homepage: s.homepage, tags: s.tags,
+                        language: s.language, countrycode: s.countrycode
+                    })
+                }
+
+                StationIcon {
+                    id: lastHeardIcon
+                    anchors.left: parent.left
+                    anchors.leftMargin: Theme.horizontalPageMargin
+                    anchors.verticalCenter: parent.verticalCenter
+                    faviconUrl: page.lastHeard ? (page.lastHeard.favicon || "") : ""
+                    homepageUrl: page.lastHeard ? (page.lastHeard.homepage || "") : ""
+                    stationuuid: page.lastHeard ? (page.lastHeard.stationuuid || "") : ""
+                    stationName: page.lastHeard ? (page.lastHeard.name || "") : ""
+                    // as in the station rows below (text on one edge)
+                    iconSize: Math.round(Theme.iconSizeSmall * 1.2)
+                }
+
+                Column {
+                    id: lastHeardColumn
+                    anchors.left: lastHeardIcon.right
+                    anchors.leftMargin: Theme.paddingMedium
+                    anchors.right: lastHeardPlay.left
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    Label {
+                        width: parent.width
+                        text: qsTr("Last heard")
+                        font.pixelSize: Theme.fontSizeExtraSmall
+                        color: Theme.secondaryHighlightColor
+                    }
+                    Label {
+                        width: parent.width
+                        text: page.lastHeard ? RadioApi.displayName(page.lastHeard.name) : ""
+                        truncationMode: TruncationMode.Fade
+                        color: lastHeardItem.highlighted ? Theme.highlightColor : Theme.primaryColor
+                    }
+                }
+
+                // The same button as at the end of the episode rows in Sailcast
+                RowPlayButton {
+                    id: lastHeardPlay
+                    anchors {
+                        right: parent.right
+                        rightMargin: Theme.horizontalPageMargin - lastHeardPlay.inset
+                        verticalCenter: parent.verticalCenter
+                    }
+                    highlighted: lastHeardItem.highlighted || down
+                    onClicked: lastHeardItem.clicked(null)
                 }
             }
 
@@ -283,8 +364,9 @@ Page {
                           ? qsTr("Check your internet connection and try again.")
                           : qsTr("Try a different search term.")
                 }
-                Button {
-                    anchors.horizontalCenter: parent.horizontalCenter
+                ActionPill {
+                    kind: "secondary"
+                    x: Theme.horizontalPageMargin
                     visible: page.searchMode ? page.searchFailed : page.topLoadFailed
                     text: qsTr("Try again")
                     onClicked: page.retry()
@@ -310,7 +392,7 @@ Page {
                     id: headerItem
                     width: parent.width
                     // Grows with the heading (large system font)
-                    height: Math.max(Theme.itemSizeSmall, sectionTitle.height + Theme.paddingSmall)
+                    height: Math.max(Theme.itemSizeExtraSmall, sectionTitle.height + 2 * Theme.paddingSmall)
                     visible: model.isHeader === true
                     // While sorting, all favourite groups are shown expanded and
                     // their headers cannot be collapsed (they are drop targets)
@@ -327,27 +409,59 @@ Page {
                         }
                     }
 
+                    // As the folders on the Podcasts page in Sailcast: right-aligned,
+                    // a small chevron left of the name in the highlight colour
                     Row {
-                        anchors.fill: parent
-                        anchors.leftMargin: Theme.horizontalPageMargin
-                        anchors.rightMargin: Theme.horizontalPageMargin
-                        spacing: Theme.paddingMedium
-
-                        SectionHeader {
-                            id: sectionTitle
-                            text: model.headerTitle || ""
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width - (collapsibleIcon.visible ? collapsibleIcon.width : 0)
+                        anchors {
+                            right: parent.right
+                            rightMargin: Theme.horizontalPageMargin
+                            verticalCenter: parent.verticalCenter
                         }
+                        spacing: Theme.paddingSmall
 
-                        IconButton {
+                        FoldChevron {
                             id: collapsibleIcon
                             anchors.verticalCenter: parent.verticalCenter
                             visible: model.collapsible === true && !headerItem.favoriteHeaderInSort
-                            icon.source: (model.sectionType === "history" ? page.historyCollapsed
-                                          : model.sectionType === "top" ? page.topStationsCollapsed
-                                          : page.isFavGroupCollapsed(model.groupId)) ? "image://theme/icon-m-right" : "image://theme/icon-m-down"
-                            enabled: false
+                            collapsed: model.sectionType === "history" ? page.historyCollapsed
+                                       : model.sectionType === "top" ? page.topStationsCollapsed
+                                       : page.isFavGroupCollapsed(model.groupId)
+                            tint: headerItem.highlighted ? Theme.primaryColor : Theme.highlightColor
+                        }
+
+                        Label {
+                            id: sectionTitle
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: model.headerTitle || ""
+                            color: headerItem.highlighted ? Theme.primaryColor : Theme.highlightColor
+                            truncationMode: TruncationMode.Fade
+                            width: Math.min(implicitWidth, headerItem.width - 2 * Theme.horizontalPageMargin
+                                            - (collapsibleIcon.visible ? collapsibleIcon.width + parent.spacing : 0)
+                                            - (countBadge.visible ? countBadge.width + parent.spacing : 0))
+                        }
+
+                        // Number of stations, as the unplayed count of a folder in Sailcast
+                        Rectangle {
+                            id: countBadge
+                            anchors.verticalCenter: parent.verticalCenter
+                            // Not a field of the list model: a new role there
+                            // is a risk (see sectionCount)
+                            readonly property int count: model.isHeader === true
+                                                         ? page.sectionCount(model.sectionType, model.groupId) : 0
+                            visible: count > 0 && !page.sortMode
+                            height: countLabel.height + Theme.paddingSmall / 2
+                            width: Math.max(height, countLabel.width + Theme.paddingMedium)
+                            radius: height / 2
+                            color: "transparent"
+                            border.color: Theme.rgba(Theme.secondaryHighlightColor, 0.6)
+                            border.width: 1
+                            Label {
+                                id: countLabel
+                                anchors.centerIn: parent
+                                text: countBadge.count > 9999 ? "9999+" : countBadge.count
+                                font.pixelSize: Theme.fontSizeExtraSmall
+                                color: Theme.secondaryHighlightColor
+                            }
                         }
                     }
                 }
@@ -502,9 +616,67 @@ Page {
     }
 
 
+    // Number of stations in a section header (the capsule). Counted from the
+    // raw lists, NOT stored as a role in mainListModel; sectionRevision makes
+    // the badges update after every rebuild (a station can move between
+    // groups without the totals changing).
+    property int sectionRevision: 0
+    function sectionCount(sectionType, groupId) {
+        var rev = sectionRevision
+        if (sectionType === "history") {
+            return rawHistory.count
+        }
+        if (sectionType === "top") {
+            return rawTopStations.count
+        }
+        if (sectionType === "favorites") {
+            var n = 0
+            var gid = Number(groupId) || 0
+            for (var i = 0; i < rawFavorites.count; i++) {
+                if ((Number(rawFavorites.get(i).groupId) || 0) === gid) {
+                    n++
+                }
+            }
+            return n
+        }
+        return 0
+    }
+
     ListModel { id: mainListModel }
     ListModel { id: rawFavorites }
     ListModel { id: rawHistory }
+
+    // "Last heard" row at the top: the station that was loaded but is not
+    // playing (paused or restored at start), otherwise the one heard before
+    // the playing one - one tap to listen to it
+    property var lastHeard: null
+    function refreshLastHeard() {
+        var current = appWindow.currentStation
+        if (current && current.url && !appWindow.isPlaying) {
+            lastHeard = current
+            return
+        }
+        for (var i = 0; i < rawHistory.count; i++) {
+            var h = rawHistory.get(i)
+            if (h.url && !(current && current.url === h.url)) {
+                lastHeard = helperStationObject(h, true, "history")
+                return
+            }
+        }
+        lastHeard = null
+    }
+    Connections {
+        target: appWindow
+        onIsPlayingChanged: page.refreshLastHeard()
+        onCurrentStationChanged: page.refreshLastHeard()
+        onStationHistoryUpdated: lastHeardTimer.restart()
+    }
+    // The history model is refreshed a moment after the signal
+    Timer { id: lastHeardTimer; interval: 300; onTriggered: page.refreshLastHeard() }
+    Connections {
+        target: rawHistory
+        onCountChanged: page.refreshLastHeard()
+    }
     ListModel { id: rawTopStations }
     ListModel { id: rawSearch }
 
@@ -518,6 +690,7 @@ Page {
     // collapse states.
     property bool sortMode: false
     onSortModeChanged: {
+        longPressHint.dismiss()
         // First "Move": once, show where the other favourite options are
         if (sortMode && !appWindow.appSettings.moveHintShown) {
             moveHint.shown = true
@@ -542,6 +715,135 @@ Page {
     }
 
     property var pendingAnchor: null
+
+    // All the way to the top INCLUDING the page header. "contentY = originY"
+    // puts the first row at the top and pushes the header (title, neighbour
+    // line) out of sight - which is what happened after every rebuild of the
+    // list while the page was at the top.
+    // Topmost allowed scroll position: the top of the page header. The
+    // anchor restoring clamped to originY (the top of the first ROW), which
+    // threw the header away whenever it was restored while the page was at
+    // the top (e.g. the playing station was the anchor).
+    function topY() {
+        // the top edge of the header in content coordinates (originY already
+        // includes the header, see the device log)
+        return listView.headerItem ? listView.headerItem.y : listView.originY
+    }
+
+    function scrollToTop() {
+        listView.contentY = topY()
+        listView.returnToBounds()
+    }
+
+    // Self-healing: with the page header scrolled out by exactly its own
+    // height (contentY == originY, the first row at the very top, nobody
+    // scrolls there to the pixel) the title is missing. This happened after
+    // swiping back to the page (the page stack is rebuilt, the anchor
+    // restore ran with stale values) and then stuck, because a list taller
+    // than the view regards the position as valid. Checked after activation,
+    // restoring the anchor and every end of a movement.
+    // After activation (swiping to the page) and after restoring the anchor
+    // the first checks are strict: if the title is partly scrolled out
+    // (the view is inside the header area) the position goes to the top of
+    // the header. Nobody stops there on purpose; this makes the page
+    // independent of the exact fault state. Movement ends only use the
+    // "stuck" rule below.
+    property int healStrictLeft: 0
+    function healStrictCheck() {
+        healStrictLeft = 3
+        healHeaderTimer.restart()
+    }
+
+    function healHeader() {
+        if (listView.moving || listView.dragging || !listView.headerItem
+                || listView.headerItem.height <= 0) {
+            return
+        }
+        // The top of the page is the top edge of the header item (its y in
+        // content coordinates) - independent of how originY is defined.
+        // The device log showed contentY == originY == -header height at the
+        // normal top, so that comparison is no sign of a missing title. The
+        // faulty state: the list thinks it is at its beginning
+        // (atYBeginning, so it cannot be pulled down) although the header
+        // top lies above the view - seen after swiping between the pages.
+        var headerTop = listView.headerItem.y
+        var strict = healStrictLeft > 0
+        if (strict) {
+            healStrictLeft--
+            if (healStrictLeft > 0) {
+                healHeaderTimer.restart()
+            }
+            if (listView.contentY > headerTop + 3
+                    && listView.contentY < headerTop + listView.headerItem.height - 3) {
+                console.warn("Sailwave scroll: title partly hidden after activation/restore (contentY "
+                             + listView.contentY + ", headerTop " + headerTop + ", header "
+                             + listView.headerItem.height + ") - back to the top of the header")
+                listView.contentY = headerTop
+                return
+            }
+        }
+        if (listView.atYBeginning && listView.contentY > headerTop + 3) {
+            console.warn("Sailwave scroll: header was hidden (stuck, contentY " + listView.contentY
+                         + ", headerTop " + headerTop + ", originY " + listView.originY
+                         + ", header " + listView.headerItem.height
+                         + ", topMargin " + listView.topMargin
+                         + ", height " + listView.height
+                         + ", contentHeight " + listView.contentHeight
+                         + ") - scrolling to the top")
+            listView.forceLayout()
+            listView.positionViewAtBeginning()
+            if (listView.contentY > listView.headerItem.y + 3) {
+                // wrong bound: set the position directly (no returnToBounds())
+                listView.contentY = listView.headerItem.y
+            }
+        }
+    }
+
+    // (v129) Header height changes (e.g. a row that appears after the start):
+    // the list keeps contentY, so the header top moves up out of the view by
+    // the added height - the title was cut off and the 150 ms repair then
+    // made the page jump. If the view was at the top of the header, it goes
+    // to the new top at once (Timer 1 ms: the header's y is updated after
+    // its height). _topPinned: the view is at (or above) the header top; it
+    // is kept up to date on every scroll, and the growing header does not
+    // change contentY, so the flag is still true when the header changes.
+    property bool _topPinned: true
+    function headerHeightChanged() {
+        if (_topPinned) {
+            pinTopTimer.restart()
+        }
+    }
+
+    Timer {
+        id: pinTopTimer
+        interval: 1
+        onTriggered: {
+            if (page._topPinned && !listView.dragging && !listView.moving && listView.headerItem
+                    && listView.contentY > listView.headerItem.y + 3) {
+                listView.contentY = listView.headerItem.y
+            }
+        }
+    }
+
+    Connections {
+        target: listView
+        onContentYChanged: {
+            if (listView.headerItem && !pinTopTimer.running) {
+                page._topPinned = listView.contentY <= listView.headerItem.y + 3
+            }
+        }
+    }
+
+    Timer {
+        id: healHeaderTimer
+        interval: 150
+        onTriggered: page.healHeader()
+    }
+
+    Connections {
+        target: listView
+        onMovementEnded: healHeaderTimer.restart()
+    }
 
     // The favourite moved last (see finishDrag)
     property string lastMovedUrl: ""
@@ -636,9 +938,9 @@ Page {
         onTriggered: {
             var anchor = page.pendingAnchor
             page.pendingAnchor = null
+            healHeaderTimer.restart()
             if (!anchor || anchor.top) {
-                listView.positionViewAtBeginning()
-                listView.contentY = listView.originY
+                page.scrollToTop()
                 return
             }
             // The row's delegate still exists (rows are synced, not rebuilt):
@@ -655,7 +957,8 @@ Page {
                 if (alive) {
                     listView.forceLayout()
                     itemY = anchor.item.y
-                    listView.contentY = Math.max(listView.originY, itemY - anchor.offset)
+                    listView.contentY = Math.max(page.topY(), itemY - anchor.offset)
+                    listView.returnToBounds()
                     return
                 }
             }
@@ -671,7 +974,8 @@ Page {
                 return
             }
             listView.positionViewAtIndex(index, ListView.Beginning)
-            listView.contentY = Math.max(listView.originY, listView.contentY - anchor.offset)
+            listView.contentY = Math.max(page.topY(), listView.contentY - anchor.offset)
+            listView.returnToBounds()
         }
     }
 
@@ -763,7 +1067,7 @@ Page {
             var up = page.dragViewY < page.autoScrollZone
             var maxY = listView.originY + listView.contentHeight - listView.height
             var y = listView.contentY + (up ? -Theme.paddingLarge : Theme.paddingLarge)
-            listView.contentY = Math.max(listView.originY, Math.min(maxY, y))
+            listView.contentY = Math.max(page.topY(), Math.min(maxY, y))
             page.moveDraggedTo(page.dragViewY)
         }
     }
@@ -857,11 +1161,11 @@ Page {
         target: appWindow
         onCurrentStationChanged: {
             page.scheduleTopRefresh()
-            if (listView.headerItem && listView.headerItem.children[1] && listView.headerItem.children[1].children[0]) {
-                var field = listView.headerItem.children[1].children[0]
-                if (field && typeof field.focus !== "undefined") {
-                    field.focus = false
-                }
+            // Closes the keyboard when a station starts (the search field
+            // registers itself; looking it up by child index broke when the
+            // neighbour line was added to the header)
+            if (page.searchFieldItem) {
+                page.searchFieldItem.focus = false
             }
         }
     }
@@ -887,6 +1191,7 @@ Page {
     }
 
     Component.onCompleted: {
+        refreshLastHeard()
         if (appWindow && appWindow.persistentState) {
             if (typeof appWindow.persistentState.getCollapseState === "function") {
                 historyCollapsed = appWindow.persistentState.getCollapseState("historyCollapsed", true)
@@ -990,7 +1295,7 @@ Page {
         // Rows inserted directly (expanding a section, loading more) get the
         // same id as in buildRows (see addRow)
         row.rowId = rowKey(row) + "#1"
-        return row
+        return normalizeRow(row)
     }
 
     function removeHistoryItem(stationUrl) {
@@ -1030,6 +1335,7 @@ Page {
         var keep = !listView.moving && page.pendingAnchor === null && mainListModel.count > 0
         var anchor = keep ? (currentStationAnchor() || captureAnchor()) : null
         var changed = syncRows(rows)
+        sectionRevision++
         if (changed && anchor && !anchor.top) {
             page.pendingAnchor = anchor
             restoreAnchorTimer.restart()
@@ -1111,7 +1417,30 @@ Page {
 
     // Unique id per row: rowKey plus a counter for the (rare) case that the
     // same station URL appears twice in one section
+    // Every row of the list model has the same roles (header rows and
+    // station rows alike). A ListModel takes its roles from the rows it gets;
+    // rows with other properties add roles later, and delegates that were
+    // created before that never see them - on the device the station rows
+    // were sometimes empty after the app start (name, logo, star missing)
+    // until the page was opened again.
+    function normalizeRow(row) {
+        var defaults = {
+            sectionType: "", name: "", country: "", language: "", countrycode: "",
+            codec: "", bitrate: 0, clickcount: 0, url: "", url_resolved: "",
+            tags: "", stationuuid: "", favicon: "", homepage: "",
+            isHeader: false, isHistory: false, groupId: 0,
+            headerTitle: "", collapsible: false, isCollapsed: false, rowId: ""
+        }
+        for (var k in defaults) {
+            if (row[k] === undefined || row[k] === null) {
+                row[k] = defaults[k]
+            }
+        }
+        return row
+    }
+
     function addRow(rows, seen, row) {
+        normalizeRow(row)
         var key = rowKey(row)
         seen[key] = (seen[key] || 0) + 1
         row.rowId = key + "#" + seen[key]
@@ -1199,7 +1528,7 @@ Page {
         if (rawTopStations.count > 0) {
             addRow(rows, seen, {
                 isHeader: true,
-                headerTitle: qsTr("Top stations"),
+                headerTitle: qsTr("Top stations for you"),
                 collapsible: true,
                 sectionType: "top",
                 isCollapsed: page.topStationsCollapsed
@@ -1405,6 +1734,21 @@ Page {
         return station.tags.split(",")
     }
 
+    // The tag weights only depend on the station pool, not on the favourites
+    // or history (those are removed afterwards), so they are computed once
+    // per pool instead of at every re-scoring (3 times around the start-up,
+    // 44-76 ms each in the profiler).
+    property var idfPoolRef: null
+    property var idfPoolValues: null
+
+    function idfForPool(pool) {
+        if (idfPoolRef !== pool || idfPoolValues === null) {
+            idfPoolValues = calculateIdf(pool)
+            idfPoolRef = pool
+        }
+        return idfPoolValues
+    }
+
     function calculateIdf(stations) {
         var docCount = stations.length
         var tagDocFrequency = {}
@@ -1450,7 +1794,7 @@ Page {
             }
         }
 
-        var idfMap = calculateIdf(availableStations)
+        var idfMap = hasProfile ? idfForPool(rawStations) : null
 
         if (!hasProfile) {
             var fallbackList = []
@@ -1686,7 +2030,9 @@ Page {
                         results.push(station)
                     }
                 }
-                if (cacheKey) {
+                // Only complete results are kept (a failed part must not be
+                // served from the cache for 10 minutes)
+                if (cacheKey && failed === 0) {
                     appWindow.persistentState.setCachedResults(cacheKey, results)
                 }
                 populateRawModel(rawSearch, rankSearchResults(results, tokens.join(" ")).slice(0, 50))
@@ -1722,5 +2068,52 @@ Page {
         id: moveHintHideTimer
         interval: 8000
         onTriggered: moveHint.dismiss()
+    }
+
+    // --- One-time hint: press and hold a station for its menu (find
+    // alternative, move, ...). The last of the hints: only when the others
+    // are done, the start page is open and there are favourites. Takes no
+    // touches; disappears after 8 s, on tap-free leaving of the page, or when
+    // the sort mode starts - and never comes back.
+    InteractionHintLabel {
+        id: longPressHint
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: appWindow.playerBarBaseHeight
+        width: parent.width - appWindow.playerPanelWidth
+        z: 10
+        text: qsTr("Press and hold a station for more options")
+        property bool shown: false
+        opacity: shown ? 1.0 : 0.0
+        visible: opacity > 0
+        Behavior on opacity { FadeAnimation { duration: 400 } }
+
+        function dismiss() {
+            if (shown) {
+                shown = false
+                longPressHintHideTimer.stop()
+                appWindow.appSettings.longPressHintShown = true
+            }
+        }
+    }
+
+    Timer {
+        id: longPressHintTimer
+        interval: 2500
+        onTriggered: {
+            var s = appWindow.appSettings
+            if (!s.longPressHintShown && s.ringHintShown && s.playerBarHintShown
+                    && s.playerBarExpandHintShown && !page.sortMode && !moveHint.shown
+                    && page.status === PageStatus.Active
+                    && appWindow.favoritesStore.favorites.length > 0) {
+                longPressHint.shown = true
+                longPressHintHideTimer.restart()
+            }
+        }
+    }
+
+    Timer {
+        id: longPressHintHideTimer
+        interval: 8000
+        onTriggered: longPressHint.dismiss()
     }
 }

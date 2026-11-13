@@ -17,9 +17,13 @@ Page {
     property var versions: []
     property var manualBackups: []
 
-    Component.onCompleted: {
+    function refresh() {
         versions = appWindow.favoritesBackup.listVersions()
         manualBackups = appWindow.favoritesBackup.listManualBackups()
+    }
+
+    Component.onCompleted: {
+        refresh()
         if (appWindow.favoritesBackup.webdavAvailable) {
             loadRemote()
         }
@@ -54,6 +58,27 @@ Page {
         case "offline": return qsTr("WebDAV server not reachable")
         default: return qsTr("Could not be loaded from the WebDAV server")
         }
+    }
+
+    // Why an automatic state was saved ("" for the ordinary ones)
+    function reasonText(entry) {
+        switch (entry.reason) {
+        case "restore": return qsTr("Before a restore")
+        case "delete-group": return entry.reasonDetail.length > 0
+                                    ? qsTr("Before deleting the group \"%1\"").arg(entry.reasonDetail)
+                                    : qsTr("Before deleting a group")
+        default: return ""
+        }
+    }
+
+    RemorsePopup { id: removeRemorse }
+
+    // A backup file is deleted after a countdown, then the lists are read again
+    function removeBackup(path) {
+        removeRemorse.execute(qsTr("Deleting backup"), function() {
+            appWindow.favoritesBackup.removeBackupFile(path)
+            refresh()
+        })
     }
 
     function formatTime(ms) {
@@ -112,11 +137,17 @@ Page {
 
             Repeater {
                 model: page.versions
-                delegate: BackgroundItem {
+                delegate: ListItem {
                     id: versionItem
                     width: column.width
-                    height: Theme.itemSizeMedium
+                    contentHeight: Theme.itemSizeMedium
                     onClicked: page.confirm(modelData.path)
+                    menu: ContextMenu {
+                        MenuItem {
+                            text: qsTr("Delete")
+                            onClicked: page.removeBackup(modelData.path)
+                        }
+                    }
 
                     Column {
                         x: Theme.horizontalPageMargin
@@ -127,6 +158,14 @@ Page {
                             width: parent.width
                             text: page.formatTime(modelData.time)
                             color: versionItem.highlighted ? Theme.highlightColor : Theme.primaryColor
+                            truncationMode: TruncationMode.Fade
+                        }
+                        Label {
+                            width: parent.width
+                            visible: page.reasonText(modelData).length > 0
+                            text: page.reasonText(modelData)
+                            color: Theme.secondaryHighlightColor
+                            font.pixelSize: Theme.fontSizeExtraSmall
                             truncationMode: TruncationMode.Fade
                         }
                         Label {
@@ -157,11 +196,17 @@ Page {
 
             Repeater {
                 model: page.manualBackups
-                delegate: BackgroundItem {
+                delegate: ListItem {
                     id: manualItem
                     width: column.width
-                    height: Theme.itemSizeMedium
+                    contentHeight: Theme.itemSizeMedium
                     onClicked: page.confirm(modelData.path)
+                    menu: ContextMenu {
+                        MenuItem {
+                            text: qsTr("Delete")
+                            onClicked: page.removeBackup(modelData.path)
+                        }
+                    }
 
                     Column {
                         x: Theme.horizontalPageMargin
@@ -172,6 +217,14 @@ Page {
                             width: parent.width
                             text: page.formatTime(modelData.time)
                             color: manualItem.highlighted ? Theme.highlightColor : Theme.primaryColor
+                            truncationMode: TruncationMode.Fade
+                        }
+                        Label {
+                            width: parent.width
+                            visible: page.reasonText(modelData).length > 0
+                            text: page.reasonText(modelData)
+                            color: Theme.secondaryHighlightColor
+                            font.pixelSize: Theme.fontSizeExtraSmall
                             truncationMode: TruncationMode.Fade
                         }
                         Label {

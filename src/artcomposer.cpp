@@ -9,6 +9,7 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QPainter>
+#include <QPainterPath>
 #include <QStandardPaths>
 #include <QTimer>
 #include <QUrl>
@@ -166,6 +167,65 @@ void ArtComposer::finishIfReady()
     }
 }
 
+namespace {
+// Station logo on a tile that works on every background (same rule as
+// StationIcon.qml): a logo with transparent edges (or a wide one) gets a
+// tile - light for dark and coloured logos, dark only for very bright
+// logos (average brightness of the opaque pixels > 0.8). A logo that fills
+// its square (opaque edges) is only clipped with rounded corners.
+void drawLogoTile(QPainter &painter, const QRectF &rect, const QImage &logoIn)
+{
+    if (logoIn.isNull()) {
+        return;
+    }
+    const QImage logo = logoIn.convertToFormat(QImage::Format_ARGB32);
+    const int w = logo.width();
+    const int h = logo.height();
+    const bool wide = w > h * 1.05;
+    const bool transparentEdge = qMin(qAlpha(logo.pixel(w / 2, 0)), qAlpha(logo.pixel(w / 2, h - 1))) < 153;
+    const bool tile = wide || transparentEdge;
+
+    const qreal radius = rect.width() * 0.2;
+    QPainterPath path;
+    path.addRoundedRect(rect, radius, radius);
+
+    painter.save();
+    painter.setPen(Qt::NoPen);
+    // soft shadow (the tile also sits on album covers)
+    painter.setBrush(QColor(0, 0, 0, 90));
+    painter.drawRoundedRect(rect.translated(0, rect.width() * 0.02), radius, radius);
+    painter.setClipPath(path);
+
+    if (tile) {
+        qreal sum = 0;
+        int count = 0;
+        for (int y = 0; y < h; y += qMax(1, h / 24)) {
+            const QRgb *line = reinterpret_cast<const QRgb *>(logo.constScanLine(y));
+            for (int x = 0; x < w; x += qMax(1, w / 24)) {
+                if (qAlpha(line[x]) > 128) {
+                    sum += (0.299 * qRed(line[x]) + 0.587 * qGreen(line[x]) + 0.114 * qBlue(line[x])) / 255.0;
+                    ++count;
+                }
+            }
+        }
+        const qreal lum = count > 0 ? sum / count : 0.5;
+        const bool darkTile = lum > 0.8;
+        painter.setBrush(darkTile ? QColor(0x2b, 0x2b, 0x2b) : QColor(0xf2, 0xf2, 0xf2));
+        painter.drawRoundedRect(rect, radius, radius);
+        const qreal inset = rect.width() * 0.12;
+        const QRectF area = rect.adjusted(inset, inset, -inset, -inset);
+        const QImage fitted = logo.scaled(area.size().toSize(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        painter.drawImage(QPointF(area.center().x() - fitted.width() / 2.0,
+                                  area.center().y() - fitted.height() / 2.0), fitted);
+    } else {
+        const QImage fitted = logo.scaled(rect.size().toSize(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        painter.drawImage(QPointF(rect.center().x() - fitted.width() / 2.0,
+                                  rect.center().y() - fitted.height() / 2.0), fitted);
+    }
+    painter.restore();
+}
+}
+
 QImage ArtComposer::render() const
 {
     const int size = m_imageSize;
@@ -184,25 +244,15 @@ QImage ArtComposer::render() const
                           size, size);
 
         if (!m_logo.isNull()) {
-            // Light rounded badge with the station logo in the bottom right
+            // Station logo on a tile in the bottom right
             const qreal badge = size * 0.32;
             const qreal margin = size * 0.04;
-            const QRectF badgeRect(size - badge - margin, size - badge - margin, badge, badge);
-            painter.setPen(Qt::NoPen);
-            painter.setBrush(Qt::white);
-            painter.drawRoundedRect(badgeRect, badge * 0.2, badge * 0.2);
-
-            const qreal inset = badge * 0.12;
-            const QRectF logoArea = badgeRect.adjusted(inset, inset, -inset, -inset);
-            const QImage logo = m_logo.scaled(logoArea.size().toSize(), Qt::KeepAspectRatio,
-                                              Qt::SmoothTransformation);
-            painter.drawImage(QPointF(logoArea.center().x() - logo.width() / 2.0,
-                                      logoArea.center().y() - logo.height() / 2.0), logo);
+            drawLogoTile(painter, QRectF(size - badge - margin, size - badge - margin, badge, badge), m_logo);
         }
     } else {
         // Station logo alone, centred and as large as possible
-        const QImage logo = m_logo.scaled(size, size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-        painter.drawImage((size - logo.width()) / 2, (size - logo.height()) / 2, logo);
+        const qreal side = size * 0.8;
+        drawLogoTile(painter, QRectF((size - side) / 2, (size - side) / 2, side, side), m_logo);
     }
 
     painter.end();

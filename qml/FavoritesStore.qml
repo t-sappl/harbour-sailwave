@@ -61,8 +61,9 @@ Item {
             healthVersion++
             return
         }
-        RadioApi.requestJson(RadioApi.apiUrl("stations/byuuid?uuids=") + uuids.join(","),
-                             appWindow.apiUserAgent, function(list) {
+        RadioApi.requestByUuids(uuids, appWindow.apiUserAgent, function(list) {
+            // null: a batch failed or the answer was empty - then no
+            // favourite may be marked "missing"
             if (!list) {
                 return
             }
@@ -364,6 +365,23 @@ Item {
         reload()
     }
 
+    // Several favourites into a group (or out of it with groupId 0) in one
+    // transaction and one reload; they are appended in the order given
+    function moveManyToGroup(urls, groupId) {
+        if (!urls || urls.length === 0) {
+            return
+        }
+        db().transaction(function(tx) {
+            for (var i = 0; i < urls.length; i++) {
+                tx.executeSql(
+                    "UPDATE favorites SET group_id = ?, sort_order = " +
+                    "(SELECT COALESCE(MAX(sort_order), -1) + 1 FROM favorites) WHERE url = ?",
+                    [groupId > 0 ? groupId : null, urls[i]])
+            }
+        })
+        reload()
+    }
+
     // Restoring a backup (I3, merge): adds favourites that are not there yet
     // (by stationuuid or stream URL) in one go; groups are matched by name
     // and created if missing. Existing favourites keep their group and
@@ -373,7 +391,7 @@ Item {
     function addMany(entries, groupNames) {
         var added = 0
         db().transaction(function(tx) {
-            var groupIds = {}
+            var groupIds = Object.create(null)   // group names like "constructor" are plain keys
             var existing = tx.executeSql("SELECT id, name FROM favorite_groups")
             for (var i = 0; i < existing.rows.length; i++) {
                 groupIds[existing.rows.item(i).name] = existing.rows.item(i).id
@@ -426,7 +444,7 @@ Item {
         db().transaction(function(tx) {
             tx.executeSql("DELETE FROM favorites")
             tx.executeSql("DELETE FROM favorite_groups")
-            var groupIds = {}
+            var groupIds = Object.create(null)   // group names like "constructor" are plain keys
             for (var g = 0; g < groupNames.length; g++) {
                 var name = groupNames[g]
                 if (name && groupIds[name] === undefined) {

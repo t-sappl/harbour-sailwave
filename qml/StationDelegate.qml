@@ -22,6 +22,19 @@ ListItem {
     // the drag handle
     property bool buttonsHidden: false
 
+    // This is the station that is playing (or paused) now: name in the accent
+    // colour on a light band, like the current chapter in Sailcast
+    readonly property bool isCurrent: appWindow.currentStation !== null
+                                      && appWindow.currentStation !== undefined
+                                      && !!model.url
+                                      && appWindow.currentStation.url === model.url
+
+    Rectangle {
+        anchors.fill: parent
+        visible: delegateItem.isCurrent
+        color: Theme.rgba(Theme.highlightBackgroundColor, 0.18)
+    }
+
     StationIcon {
         id: stationIcon
         anchors.verticalCenter: parent.verticalCenter
@@ -31,7 +44,9 @@ ListItem {
         homepageUrl: model.homepage || ""
         stationuuid: model.stationuuid || ""
         stationName: model.name || ""
-        iconSize: Theme.iconSizeSmall
+        // 48 px on a 40 px iconSizeSmall: easier to recognise, the row stays
+        // as high as before (TEST-PROTOCOL 37.14)
+        iconSize: Math.round(Theme.iconSizeSmall * 1.2)
     }
 
     Column {
@@ -47,9 +62,9 @@ ListItem {
             width: parent.width
             // Cleaned here too: favourites and history entries stored by
             // older versions may still contain the raw name
-            text: RadioApi.cleanName(model.name)
+            text: RadioApi.displayName(model.name)
             truncationMode: TruncationMode.Fade
-            color: delegateItem.highlighted ? Theme.highlightColor : Theme.primaryColor
+            color: (delegateItem.highlighted || delegateItem.isCurrent) ? Theme.highlightColor : Theme.primaryColor
         }
         Label {
             width: parent.width
@@ -63,9 +78,11 @@ ListItem {
         Label {
             width: parent.width
             visible: text.length > 0
-            text: model.tags ? model.tags.split(",").slice(0, 3).join(" · ") : ""
+            text: RadioApi.displayTags(model.tags, 3, !model.bitrate).join(" · ")
             font.pixelSize: Theme.fontSizeTiny
-            color: Theme.secondaryHighlightColor
+            // Plain secondary text, not the blue of tappable things: the
+            // tags are no links (as the categories on the Sailcast podcast page)
+            color: Theme.rgba(Theme.secondaryColor, 0.75)
             truncationMode: TruncationMode.Fade
         }
     }
@@ -76,6 +93,10 @@ ListItem {
         anchors.verticalCenter: parent.verticalCenter
         anchors.right: favoriteButton.left
         icon.source: "image://theme/icon-m-about"
+        // Quieter than the favourite star: the name is the main thing in the
+        // row, the (i) is a side path
+        icon.color: Theme.rgba(Theme.primaryColor, 0.4)
+        scale: 0.8
         onClicked: appWindow.openStationInfo({
             name: model.name,
             url: model.url,
@@ -101,6 +122,12 @@ ListItem {
         icon.source: appWindow.favoritesStore.isFavorite(model.url)
                      ? "image://theme/icon-m-favorite-selected"
                      : "image://theme/icon-m-favorite"
+        // As in the player bar: smaller and dimmer, the highlight colour
+        // marks a favourite (two bright icons per row were too loud)
+        readonly property bool isFav: appWindow.favoritesStore.isFavorite(model.url)
+        icon.color: isFav ? Theme.highlightColor : Theme.primaryColor
+        scale: 0.85
+        opacity: isFav ? 1.0 : 0.75
         onClicked: appWindow.favoritesStore.toggle({
             name: model.name,
             url: model.url,

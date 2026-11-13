@@ -1,0 +1,8 @@
+# Qt Creator user settings (local, per machine)
+*.pro.user
+*.pro.user.*
+
+# Build output of the transitional package (migration/)
+migration/RPMS/
+migration/build/
+migration/*.tar*

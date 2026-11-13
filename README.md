@@ -23,7 +23,7 @@ More: [app cover](screenshots/cover.png) · [lock screen](screenshots/lock-scree
 - **Discover** – top stations scored by your listening profile (favorites, history, current station, home country), station history, quick search
 - **Advanced search** – free text plus genre, language and country filters that expand right on the page, audio quality and sorting
 - **Favorites** – user-named groups, reorder by drag and drop (also across groups), a dedicated management page, reachability check with "Find alternative" for streams that stopped working
-- **Backup and sync** – automatic JSON backup in `Documents/Sailwave` with the last five states; manual backups with date and time (JSON or M3U playlist) on the device, shared via the system's share menu or on a WebDAV server (e.g. Nextcloud); restore from any of them (replace or add missing); optional automatic sync via WebDAV with conflict handling
+- **Backup and sync** – automatic JSON backup in `Documents/Sailwave` with the last five states; manual backups with date and time (JSON or M3U playlist) on the device, shared via the system's share menu or on a WebDAV server (e.g. Nextcloud); restore from the JSON backups (replace or add missing; M3U is export only); optional automatic sync via WebDAV with conflict handling
 - **Track history** – grouped by station, searchable, with album covers, album and genre from the iTunes Search API (optional)
 - **Station info** – details, votes and clicks, homepage correction, similar stations (by tags, or by the genres a station plays)
 - **Landscape and car** – in landscape the player moves into a panel on the right with large previous/play/next buttons; optional favorite tiles with large station logos (always, or only in landscape)
@@ -60,7 +60,7 @@ Sailwave has no account, no tracking and no ads, and the developer runs no serve
 - **Google favicon service** – only for stations without a usable logo: the domain of the station's homepage is sent to get its icon (can be turned off in the settings).
 - **iTunes Search API (Apple)** – if "Song details from iTunes" is enabled, the title and artist of the current song are sent to look up the cover, album and genre.
 - **ipapi.co / api.country.is** – to detect your home country from your IP address, unless you set it in the settings.
-- **Your WebDAV server** – only if you set one up (manual backups and optional automatic sync). The password is kept encrypted in the system's secure storage (Sailfish Secrets), not in the app's database.
+- **Your WebDAV server** – only if you set one up (manual backups and optional automatic sync; for Nextcloud you can sign in in the browser, Login Flow v2, and the server hands the app its own app password). The password is kept encrypted in the system's secure storage (Sailfish Secrets), not in the app's database.
 
 Album covers and station logos are cached on the device; "Clear cache" in the settings removes them. Details: [`PRIVACY.md`](PRIVACY.md).
 

@@ -8,23 +8,57 @@ Rectangle {
 
     // Takes all touches on the bar that no control inside handles (e.g. the
     // title preview with fewer than 3 titles, which does not scroll) - they
-    // must not reach the page behind the bar and scroll it
+    // must not reach the page behind the bar and scroll it.
+    // A clearly vertical swipe opens (up) or closes (down) the expanded area,
+    // in addition to the button (as in Sailcast). Left/right swipes are not
+    // touched (they page through the ring); controls keep their own touches.
+    property bool _swiped: false
+    function swipeEnded(dx, dy) {
+        if (_swiped) {
+            return
+        }
+        // long enough, and steeper than about 50 degrees
+        if (Math.abs(dy) < Theme.paddingLarge * 2 || Math.abs(dy) < 1.2 * Math.abs(dx)) {
+            return
+        }
+        if (dy < 0 && !expanded) {
+            expanded = true
+            _swiped = true
+        } else if (dy > 0 && expanded) {
+            expanded = false
+            _swiped = true
+        }
+    }
+
     MouseArea {
         anchors.fill: parent
         preventStealing: true
+        property real _x0: 0
+        property real _y0: 0
+        onPressed: {
+            _x0 = mouse.x; _y0 = mouse.y; playerBar._swiped = false
+        }
+        // acts while the finger moves (a release outside may never arrive)
+        onPositionChanged: playerBar.swipeEnded(mouse.x - _x0, mouse.y - _y0)
+        onReleased: playerBar.swipeEnded(mouse.x - _x0, mouse.y - _y0)
         onWheel: wheel.accepted = true
     }
 
-    // Pages without a PlayerBar: Settings, About, the country picker, the
+    // Pages without a PlayerBar: Settings and its sub-pages, About, the country picker, the
     // homepage dialog and the favourites management (editing pages)
     readonly property bool isHiddenPage: {
         var page = pageStack.currentPage
         return page && (page.objectName === "settingsPage"
+                        || page.objectName === "settingsPlaybackPage"
+                        || page.objectName === "settingsDiscoverPage"
+                        || page.objectName === "settingsBackupPage"
+                        || page.objectName === "settingsPrivacyPage"
                         || page.objectName === "aboutPage"
                         || page.objectName === "countryPickerPage"
                         || page.objectName === "homepageDialog"
                         || page.objectName === "favoritesPage"
                         || page.objectName === "groupNameDialog"
+                        || page.objectName === "groupStationsDialog"
                         || page.objectName === "restorePage"
                         || page.objectName === "backupPage"
                         || page.objectName === "restoreConfirmDialog"
@@ -173,7 +207,7 @@ Rectangle {
         }
     }
     readonly property real sleepRowHeight: Theme.itemSizeSmall
-    readonly property var sleepOptions: [5, 10, 15, 30, 45, 60, 90]
+    readonly property var sleepOptions: [5, 10, 20, 30, 45, 60]   // as in Sailcast
 
     // Height of the collapsed bar (the sleep row only exists while expanded)
     // Grows with the text (large system font): station name + title line
@@ -248,7 +282,7 @@ Rectangle {
         Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutQuad } }
         Behavior on opacity { FadeAnimation { duration: 150 } }
 
-        readonly property real cellWidth: (width - 2 * Theme.horizontalPageMargin) / (playerBar.sleepOptions.length + 1)
+        readonly property real cellWidth: (width - 2 * Theme.horizontalPageMargin) / (playerBar.sleepOptions.length + 2)
 
         Row {
             x: Theme.horizontalPageMargin
@@ -279,6 +313,28 @@ Rectangle {
                         appWindow.sleepTimer.start(modelData)
                         playerBar.sleepSelectorOpen = false
                     }
+                }
+            }
+
+            // Own duration (as in Sailcast): hours and minutes
+            BackgroundItem {
+                id: otherOption
+                width: sleepRow.cellWidth
+                height: parent.height
+                readonly property bool current: appWindow.sleepTimer.active
+                                                && playerBar.sleepOptions.indexOf(appWindow.appSettings.sleepTimerMinutes) < 0
+
+                Label {
+                    anchors.centerIn: parent
+                    text: "…"
+                    font.pixelSize: Theme.fontSizeSmall
+                    font.bold: otherOption.current
+                    color: (otherOption.current || otherOption.highlighted) ? Theme.highlightColor : Theme.primaryColor
+                }
+
+                onClicked: {
+                    playerBar.sleepSelectorOpen = false
+                    appWindow.chooseSleepTime()
                 }
             }
 
@@ -323,13 +379,25 @@ Rectangle {
 
             BackgroundItem {
                 width: parent.width - (sleepButton.visible ? sleepButton.width + parent.spacing : 0)
-                       - expandIcon.width - favoriteButton.width - playButton.width - (parent.spacing * 3)
+                       - expandIcon.width - favoriteButton.width - playGap.width - playButton.width - (parent.spacing * 4)
                 height: parent.height
                 anchors.verticalCenter: parent.verticalCenter
                 enabled: appWindow && appWindow.currentStation && (appWindow.currentStation.name || appWindow.currentStation.stationuuid)
 
+                // This area covers most of the bar and takes the touches
+                // before the MouseArea under the controls sees them, so the
+                // swipe has to be watched here as well (as in Sailcast)
+                property real _x0: 0
+                property real _y0: 0
+                onPressed: {
+                    _x0 = mouse.x; _y0 = mouse.y; playerBar._swiped = false
+                }
+                onPositionChanged: playerBar.swipeEnded(mouse.x - _x0, mouse.y - _y0)
+                onReleased: playerBar.swipeEnded(mouse.x - _x0, mouse.y - _y0)
+
+                // a swipe that began here is no tap
                 onClicked: {
-                    if (appWindow && appWindow.currentStation) {
+                    if (!playerBar._swiped && appWindow && appWindow.currentStation) {
                         appWindow.openStationInfo(appWindow.currentStation)
                     }
                 }
@@ -392,10 +460,12 @@ Rectangle {
                             x: artBox.width - width + overhang
                             y: artBox.height - height + overhang
                             radius: width * 0.22 * t
-                            color: Qt.rgba(1, 1, 1, t)
+                            // The tile comes from StationIcon itself
+                            color: "transparent"
 
                             StationIcon {
                                 id: favicon
+                                shadow: artBox.hasAlbum
                                 anchors.centerIn: parent
                                 iconSize: Theme.iconSizeMedium
                                 scale: (logoBadge.width * (1.0 - logoBadge.t * 0.22)) / Theme.iconSizeMedium
@@ -521,8 +591,12 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 icon.source: playerBar.isCurrentFavorite ? "image://theme/icon-m-favorite-selected" : "image://theme/icon-m-favorite"
                 icon.color: playerBar.isCurrentFavorite ? Theme.highlightColor : Theme.primaryColor
+                // As the "next" button of the Sailcast player bar: smaller and
+                // dimmer, so play stays the one large button; the highlight
+                // colour of a favourite still shows
+                scale: 0.8
                 enabled: appWindow && appWindow.currentStation && (appWindow.currentStation.url || appWindow.currentStation.stationuuid)
-                opacity: enabled ? 1.0 : 0.4
+                opacity: !enabled ? 0.4 : (playerBar.isCurrentFavorite ? 1.0 : 0.75)
 
                 onClicked: {
                     if (appWindow && appWindow.currentStation && appWindow.favoritesStore) {
@@ -544,10 +618,18 @@ Rectangle {
                 }
             }
 
+            // Gap before the large play button (as Sailcast)
+            Item {
+                id: playGap
+                width: Theme.paddingLarge
+                height: 1
+            }
+
+            // Large, the same symbol as in Sailcast
             IconButton {
                 id: playButton
                 anchors.verticalCenter: parent.verticalCenter
-                icon.source: (appWindow && appWindow.isPlaying) ? "image://theme/icon-m-pause" : "image://theme/icon-m-play"
+                icon.source: (appWindow && appWindow.isPlaying) ? "image://theme/icon-l-pause" : "image://theme/icon-l-play"
                 icon.color: Theme.primaryColor
                 enabled: appWindow && appWindow.currentStation && (appWindow.currentStation.name || appWindow.currentStation.stationuuid)
                 opacity: enabled ? 1.0 : 0.4

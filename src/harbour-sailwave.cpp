@@ -9,6 +9,7 @@
 #include "artcomposer.h"
 #include "filehelper.h"
 #include "networkaccess.h"
+#include "nextcloudlogin.h"
 #include "secretstore.h"
 #include "webdavclient.h"
 
@@ -26,6 +27,8 @@ int main(int argc, char *argv[])
     // Favourites backup / M3U export (files) and WebDAV sync (see I3-I5)
     FileHelper fileHelper;
     WebDavClient webDav;
+    // Nextcloud sign-in in the browser (Login Flow v2)
+    NextcloudLogin nextcloudLogin;
     // WebDAV password in Sailfish Secrets instead of the app database
     SecretStore secretStore;
 
@@ -37,6 +40,7 @@ int main(int argc, char *argv[])
     view->rootContext()->setContextProperty(QStringLiteral("imageCache"), &imageCacheControl);
     view->rootContext()->setContextProperty(QStringLiteral("fileHelper"), &fileHelper);
     view->rootContext()->setContextProperty(QStringLiteral("webDav"), &webDav);
+    view->rootContext()->setContextProperty(QStringLiteral("nextcloudLogin"), &nextcloudLogin);
     view->rootContext()->setContextProperty(QStringLiteral("secretStore"), &secretStore);
 
     view->setSource(SailfishApp::pathTo("qml/harbour-sailwave.qml"));

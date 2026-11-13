@@ -7,6 +7,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QObject>
+#include <QSaveFile>
 #include <QStandardPaths>
 #include <QTextStream>
 #include <QVariantList>
@@ -56,16 +57,15 @@ public:
     {
         QFileInfo info(path);
         QDir().mkpath(info.absolutePath());
-        const QString tmp = path + QStringLiteral(".tmp");
-        QFile file(tmp);
-        if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        // QSaveFile writes to a temporary file and replaces the target only
+        // if everything was written (disk full: the old file stays)
+        QSaveFile file(path);
+        if (!file.open(QIODevice::WriteOnly)) {
             qWarning("[FileHelper] Cannot write %s", qPrintable(path));
             return false;
         }
-        file.write(text.toUtf8());
-        file.close();
-        QFile::remove(path);
-        if (!QFile::rename(tmp, path)) {
+        const QByteArray bytes = text.toUtf8();
+        if (file.write(bytes) != bytes.size() || !file.commit()) {
             qWarning("[FileHelper] Cannot replace %s", qPrintable(path));
             return false;
         }
@@ -77,6 +77,11 @@ public:
     {
         QFile file(path);
         if (!file.open(QIODevice::ReadOnly)) {
+            return QString();
+        }
+        // Text files of the app (backups) are small; a huge file is no backup
+        if (file.size() > 5 * 1024 * 1024) {
+            qWarning("[FileHelper] %s is too large", qPrintable(path));
             return QString();
         }
         return QString::fromUtf8(file.readAll());

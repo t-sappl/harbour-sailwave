@@ -41,9 +41,157 @@ Page {
     // normal stack pages.
     property bool ringMember: false
 
+    // The page header grows after the page was created (neighbour line); as
+    // long as the user has not scrolled, the top (title) stays visible.
+    function scrollToTop() {
+        var headerHeight = listView.headerItem ? listView.headerItem.height : 0
+        listView.contentY = listView.headerItem ? listView.headerItem.y : listView.originY - headerHeight
+        listView.returnToBounds()
+    }
+    function keepTop() {
+        if (!listView.userScrolled && !listView.moving) {
+            scrollToTop()
+        }
+    }
+
+    // Self-healing: with the page header scrolled out by exactly its own
+    // height (contentY == originY, the first row at the very top, nobody
+    // scrolls there to the pixel) the title is missing. This happened after
+    // swiping back to the page (the page stack is rebuilt, the anchor
+    // restore ran with stale values) and then stuck, because a list taller
+    // than the view regards the position as valid. Checked after activation,
+    // restoring the anchor and every end of a movement.
+    // After activation (swiping to the page) and after restoring the anchor
+    // the first checks are strict: if the title is partly scrolled out
+    // (the view is inside the header area) the position goes to the top of
+    // the header. Nobody stops there on purpose; this makes the page
+    // independent of the exact fault state. Movement ends only use the
+    // "stuck" rule below.
+    property int healStrictLeft: 0
+    function healStrictCheck() {
+        healStrictLeft = 3
+        healHeaderTimer.restart()
+    }
+
+    function healHeader() {
+        if (listView.moving || listView.dragging || !listView.headerItem
+                || listView.headerItem.height <= 0) {
+            return
+        }
+        // The top of the page is the top edge of the header item (its y in
+        // content coordinates) - independent of how originY is defined.
+        // The device log showed contentY == originY == -header height at the
+        // normal top, so that comparison is no sign of a missing title. The
+        // faulty state: the list thinks it is at its beginning
+        // (atYBeginning, so it cannot be pulled down) although the header
+        // top lies above the view - seen after swiping between the pages.
+        var headerTop = listView.headerItem.y
+        var strict = healStrictLeft > 0
+        if (strict) {
+            healStrictLeft--
+            if (healStrictLeft > 0) {
+                healHeaderTimer.restart()
+            }
+            if (listView.contentY > headerTop + 3
+                    && listView.contentY < headerTop + listView.headerItem.height - 3) {
+                console.warn("Sailwave scroll: title partly hidden after activation/restore (contentY "
+                             + listView.contentY + ", headerTop " + headerTop + ", header "
+                             + listView.headerItem.height + ") - back to the top of the header")
+                listView.contentY = headerTop
+                return
+            }
+        }
+        if (listView.atYBeginning && listView.contentY > headerTop + 3) {
+            console.warn("Sailwave scroll: header was hidden (stuck, contentY " + listView.contentY
+                         + ", headerTop " + headerTop + ", originY " + listView.originY
+                         + ", header " + listView.headerItem.height
+                         + ", topMargin " + listView.topMargin
+                         + ", height " + listView.height
+                         + ", contentHeight " + listView.contentHeight
+                         + ") - scrolling to the top")
+            listView.userScrolled = false
+            listView.forceLayout()
+            listView.positionViewAtBeginning()
+            if (listView.contentY > listView.headerItem.y + 3) {
+                // wrong bound: set the position directly (no returnToBounds())
+                listView.contentY = listView.headerItem.y
+            }
+        }
+    }
+
+    Timer {
+        id: healHeaderTimer
+        interval: 150
+        onTriggered: searchPage.healHeader()
+    }
+
+
+    // While typing with results on the page the filters (chips and rows) are
+    // out of the way, so the results sit right under the search field; when
+    // the keyboard closes they come back and the list scrolls to the results
+    readonly property bool compactFilters: Qt.inputMethod.visible && searchDone
+                                           && !searchFailed && searchResultsModel.count > 0
+    // Hiding the filters changes the header: back to the top (search field
+    // and the first results are in view), after the layout has settled
+    onCompactFiltersChanged: {
+        if (compactFilters) {
+            compactScrollTimer.restart()
+        }
+    }
+    Timer {
+        id: compactScrollTimer
+        interval: 80
+        onTriggered: {
+            listView.userScrolled = false
+            searchPage.scrollToTop()
+        }
+    }
+
+    Connections {
+        target: Qt.inputMethod
+        onVisibleChanged: {
+            if (!Qt.inputMethod.visible && searchPage.status === PageStatus.Active
+                    && searchPage.searchDone && searchResultsModel.count > 0) {
+                searchPage.scrollToResultsPending = true
+                scrollToResultsTimer.restart()
+            }
+        }
+    }
+
+    // After "Search" on the keyboard: as soon as the results are there, the
+    // list scrolls so that the "Search results" header sits at the top, i.e.
+    // the results are not left below the filters
+    property bool scrollToResultsPending: false
+    onScrollToResultsPendingChanged: {
+        if (scrollToResultsPending) {
+            pendingExpireTimer.restart()
+        } else {
+            pendingExpireTimer.stop()
+        }
+    }
+
+    function scrollToResults() {
+        scrollToResultsPending = false
+        var hi = listView.headerItem
+        if (!hi) {
+            return
+        }
+        listView.userScrolled = true
+        // hi.y = top of the header in content coordinates (originY already
+        // includes the header: the device log showed originY == -header height)
+        listView.contentY = hi.y + hi.resultsY
+        listView.returnToBounds()
+    }
+
     onStatusChanged: {
+        if (status === PageStatus.Active) {
+            healStrictCheck()
+        }
         if (ringMember && status === PageStatus.Active) {
             appWindow.ringPageActivated(searchPage)
+        }
+        if (status === PageStatus.Activating) {
+            keepTop()
         }
         if (status === PageStatus.Deactivating) {
             searchResultsHint.dismiss()
@@ -97,6 +245,9 @@ Page {
 
     // Error / empty state of the last search (shown below the results)
     property bool searchDone: false
+    // The list sent by the server was cut at its limit: more may exist
+    property bool resultsTruncated: false
+    property int lastResultLimit: 0
     property bool searchFailed: false
     property int searchRequestId: 0
 
@@ -201,6 +352,8 @@ Page {
         }
     }
 
+    property int languageRequestId: 0
+
     function updateRecommendedLanguages() {
         if (!activeCountryCodes || activeCountryCodes.length === 0) {
             var langs = []
@@ -249,9 +402,14 @@ Page {
         }
 
         var pendingRequests = countriesToFetch.length
+        var myLangRequestId = ++languageRequestId
 
         function checkRadioLanguagesFinished() {
             pendingRequests--
+            if (myLangRequestId !== languageRequestId) {
+                // Newer country selection: this answer is outdated
+                return
+            }
             if (pendingRequests <= 0) {
                 finalizeRadioLanguages(combinedLangCounts)
             }
@@ -259,7 +417,10 @@ Page {
 
         for (var f = 0; f < countriesToFetch.length; f++) {
             (function(codeToFetch) {
-                RadioApi.requestJson(apiBase + "bycountrycodeexact/" + encodeURIComponent(codeToFetch) + "?hidebroken=true",
+                // The 300 most popular stations of the country are enough to
+                // rank its languages (the whole list was several MB)
+                RadioApi.requestJson(apiBase + "search?countrycode=" + encodeURIComponent(codeToFetch)
+                                     + "&order=clickcount&reverse=true&limit=300&hidebroken=true",
                                      appWindow.apiUserAgent, function(stations) {
                     var singleCountryLangCounts = {}
                     if (stations) {
@@ -270,7 +431,10 @@ Page {
                             }
                         }
                     }
-                    radioLanguageCache[codeToFetch] = singleCountryLangCounts
+                    // A failed request is not cached (it would stay empty)
+                    if (stations) {
+                        radioLanguageCache[codeToFetch] = singleCountryLangCounts
+                    }
 
                     for (var l in singleCountryLangCounts) {
                         combinedLangCounts[l] = (combinedLangCounts[l] || 0) + singleCountryLangCounts[l]
@@ -300,21 +464,10 @@ Page {
         validateActiveLanguages()
     }
 
+    // Chosen languages stay chosen: they used to be dropped (and the search
+    // repeated) when they were in neither list - which hit languages typed
+    // by hand and every language while the full list was not loaded yet.
     function validateActiveLanguages() {
-        if (!activeLanguages) return
-        var validActiveLangs = []
-        for (var k = 0; k < activeLanguages.length; k++) {
-            // Keep a language that was picked from the full list ("More
-            // languages"); only drop ones that are in neither list
-            if (recommendedLanguages.indexOf(activeLanguages[k]) !== -1
-                    || allLanguages.indexOf(activeLanguages[k]) !== -1) {
-                validActiveLangs.push(activeLanguages[k])
-            }
-        }
-        if (validActiveLangs.length !== activeLanguages.length) {
-            activeLanguages = validActiveLangs
-            performAdvancedSearch(searchPage.searchFieldText, activeTags, activeLanguages, activeCountryCodes)
-        }
     }
 
     function updateCountryRecommendations(userCountryCode) {
@@ -476,16 +629,10 @@ Page {
         return limit > 0 ? result.slice(0, limit) : result
     }
 
-    // Shown next to the filter name: the selection, or "All"
+    // The value in a filter's row: "All" without a selection; the chosen
+    // ones are the chips under "Active filters", so the row stays empty
     function filterValueText(kind) {
-        var active = activeList(kind)
-        if (active.length === 0) {
-            return qsTr("All")
-        }
-        if (kind === "countries") {
-            return active.map(function(code) { return searchPage.countryName(code) }).join(", ")
-        }
-        return active.join(", ")
+        return activeList(kind).length === 0 ? qsTr("All") : ""
     }
 
     // Loads the most used names of a radio-browser list ("tags" or
@@ -557,6 +704,7 @@ Page {
             busy.running = false
             searchDone = false
             searchFailed = false
+            scrollToResultsPending = false
             return
         }
 
@@ -590,8 +738,28 @@ Page {
             }
         }
 
-        // Free text is searched in station names and tags
-        var fields = rawQuery ? ["name", "tag"] : [""]
+        // Free text is searched in station names and tags. With several words
+        // the server only gets the longest one (the API matches a phrase as one
+        // piece; "paradise radio" would not find "Radio Paradise"), the local
+        // filter then requires every word. With a genre filter the tag field is
+        // left out (the request would carry "tag" twice).
+        var serverText = rawQuery
+        if (tokens.length > 1) {
+            serverText = tokens.slice().sort(function(a, b) { return b.length - a.length })[0]
+        }
+        var tagFilterOnServer = serverParam === "tag" || serverParam === "tagList"
+        var fields = rawQuery ? (tagFilterOnServer ? ["name"] : ["name", "tag"]) : [""]
+
+        // The server filters one type only, the others run locally on what
+        // came back: a longer list, otherwise "Austria + jazz" would only look
+        // at the 100 most popular Austrian stations
+        var hasCountry = countryCodeQueries && countryCodeQueries.length > 0
+        var hasLang = langQueries && langQueries.length > 0
+        var hasTag = tagQueries && tagQueries.length > 0
+        var needsLocalFilter = (hasCountry && (hasLang || hasTag)) || (hasLang && hasTag)
+                               || (serverParam === "tag" && tokens.length > 0)
+        var resultLimit = needsLocalFilter ? 500 : (tokens.length > 1 ? 300 : 100)
+        lastResultLimit = resultLimit
 
         var urls = []
         for (var v = 0; v < serverValues.length; v++) {
@@ -599,11 +767,11 @@ Page {
                     ? "&" + serverParam + "=" + encodeURIComponent(serverValues[v]) : ""
             for (var f = 0; f < fields.length; f++) {
                 if (fields[f]) {
-                    urls.push(apiBase + "search?" + fields[f] + "=" + encodeURIComponent(rawQuery)
-                              + filterParam + "&limit=100&hidebroken=true")
+                    urls.push(apiBase + "search?" + fields[f] + "=" + encodeURIComponent(serverText)
+                              + filterParam + "&limit=" + resultLimit + "&hidebroken=true")
                 } else {
                     urls.push(apiBase + "search?order=clickcount&reverse=true"
-                              + filterParam + "&limit=100&hidebroken=true")
+                              + filterParam + "&limit=" + resultLimit + "&hidebroken=true")
                 }
             }
         }
@@ -632,6 +800,7 @@ Page {
             searchResultsModel.clear()
             searchDone = false
             searchFailed = false
+            scrollToResultsPending = false
             return
         }
 
@@ -658,7 +827,8 @@ Page {
                 busy.running = false
                 searchDone = true
                 searchFailed = (failed === urls.length)
-                if (!searchFailed) {
+                // Cache only complete results (see the start page search)
+                if (!searchFailed && failed === 0) {
                     var list = []
                     for (var mk in merged) {
                         list.push(merged[mk])
@@ -671,6 +841,11 @@ Page {
 
     function processAndDisplayResults(mergedMap, rawQuery, tokens, activeTagFilters, activeLangFilters, activeCountryFilters, home) {
         var results = []
+        var rawCount = 0
+        for (var rk in mergedMap) {
+            rawCount++
+        }
+        resultsTruncated = lastResultLimit > 0 && rawCount >= lastResultLimit
 
         for (var key in mergedMap) {
             var s = mergedMap[key]
@@ -782,6 +957,10 @@ Page {
         for (var j = 0; j < results.length && j < 100; j++) {
             searchResultsModel.append(results[j])
         }
+        if (scrollToResultsPending) {
+            // After the keyboard has gone and the layout has settled
+            scrollToResultsTimer.restart()
+        }
     }
 
     SilicaListView {
@@ -794,13 +973,29 @@ Page {
 
         currentIndex: -1
 
+        property bool userScrolled: false
+        onMovementStarted: userScrolled = true
+        onMovementEnded: {
+            userScrolled = !atYBeginning
+            healHeaderTimer.restart()
+        }
+        Connections {
+            target: listView.headerItem
+            onHeightChanged: searchPage.keepTop()
+        }
+
         header: Column {
             width: parent.width
             spacing: Theme.paddingSmall
 
+            // Position of the "Search results" header (scrolling to the results)
+            property real resultsY: resultsSectionHeader.y
+
             PageHeader {
                 title: qsTr("Advanced search")
             }
+
+            RingNeighbours { ringPage: searchPage }
 
             SearchField {
                 id: searchField
@@ -810,10 +1005,13 @@ Page {
                 EnterKey.iconSource: "image://theme/icon-m-search"
                 EnterKey.onClicked: {
                     searchTimer.stop()
+                    searchPage.scrollToResultsPending = true
                     performAdvancedSearch(searchPage.searchFieldText, activeTags, activeLanguages, activeCountryCodes)
                     searchField.focus = false
                 }
                 onTextChanged: {
+                    searchPage.scrollToResultsPending = false
+                    scrollToResultsTimer.stop()
                     searchPage.searchFieldText = text
                     searchTimer.restart()
                 }
@@ -824,46 +1022,69 @@ Page {
                 }
             }
 
-            // Active filters and reset
+            // Active filters: the chosen genres, languages and countries as
+            // filled chips (a tap removes one), as the chosen languages and
+            // keywords in "My interests" of Sailcast; "Clear all" resets the
+            // search text and every filter
             Column {
+                id: activeFiltersBlock
                 width: parent.width
-                visible: searchPage.searchFieldText.length > 0 || activeTags.length > 0 || activeLanguages.length > 0 || activeCountryCodes.length > 0 || minBitrate > 0
-                spacing: Theme.paddingSmall
+                visible: !searchPage.compactFilters && (searchPage.searchFieldText.length > 0 || activeTags.length > 0 || activeLanguages.length > 0 || activeCountryCodes.length > 0 || minBitrate > 0)
+                spacing: 0
 
-                // "Active filters" with a clear button on the right - the same
-                // clear symbol Silica uses in its search fields
-                Item {
-                    x: Theme.horizontalPageMargin
-                    width: parent.width - (Theme.horizontalPageMargin * 2)
-                    height: resetFiltersButton.height
-
-                    Label {
-                        text: qsTr("Active filters")
-                        font.pixelSize: Theme.fontSizeSmall
-                        color: Theme.secondaryHighlightColor
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-
-                    IconButton {
-                        id: resetFiltersButton
-                        anchors.right: parent.right
-                        anchors.rightMargin: -Theme.paddingMedium
-                        icon.source: "image://theme/icon-m-clear"
-                        onClicked: {
-                            searchTimer.stop()
-                            searchField.text = ""
-                            searchPage.searchFieldText = ""
-                            activeTags = []
-                            activeLanguages = []
-                            activeCountryCodes = []
-                            minBitrate = 0
-                            sortMode = "popularity"
-                            tagMatchMode = "OR"
-                            languageMatchMode = "OR"
-                            audioCombo.currentIndex = 0
-                            sortCombo.currentIndex = 0
-                            performAdvancedSearch("", [], [], [])
+                readonly property var chips: {
+                    var list = []
+                    var kinds = ["genres", "languages", "countries"]
+                    for (var k = 0; k < kinds.length; k++) {
+                        var values = searchPage.activeList(kinds[k])
+                        for (var v = 0; v < values.length; v++) {
+                            list.push({
+                                kind: kinds[k],
+                                key: values[v],
+                                label: kinds[k] === "countries" ? searchPage.countryName(values[v]) : values[v]
+                            })
                         }
+                    }
+                    return list
+                }
+
+                SectionHeader {
+                    text: qsTr("Active filters")
+                }
+
+                Flow {
+                    x: Theme.horizontalPageMargin
+                    width: parent.width - 2 * Theme.horizontalPageMargin
+                    visible: activeFiltersBlock.chips.length > 0
+
+                    Repeater {
+                        model: activeFiltersBlock.chips
+                        FilterChip {
+                            selected: true
+                            text: modelData.label + " \u00D7"
+                            onClicked: searchPage.toggleFilterValue(modelData.kind, modelData.key)
+                        }
+                    }
+                }
+
+                ActionPill {
+                    x: Theme.horizontalPageMargin
+                    kind: "secondary"
+                    text: qsTr("Clear filters")
+                    onClicked: {
+                        searchTimer.stop()
+                        searchField.text = ""
+                        searchPage.searchFieldText = ""
+                        activeTags = []
+                        activeLanguages = []
+                        activeCountryCodes = []
+                        minBitrate = 0
+                        sortMode = "popularity"
+                        tagMatchMode = "OR"
+                        languageMatchMode = "OR"
+                        audioCombo.currentIndex = 0
+                        sortCombo.currentIndex = 0
+                        performAdvancedSearch("", [], [], [])
                     }
                 }
             }
@@ -873,13 +1094,12 @@ Page {
             // wrap, no horizontal scrolling, no extra page); only one is open
             // at a time. Every tap searches right away (short delay).
             FilterSection {
+                visible: !searchPage.compactFilters
                 title: qsTr("Genres")
                 value: searchPage.filterValueText("genres")
                 expanded: searchPage.openFilter === "genres"
                 flickable: listView
-                clearable: activeTags.length > 0
                 onClicked: searchPage.toggleFilter("genres")
-                onClearClicked: searchPage.clearFilter("genres")
                 contentComponent: Component {
                     AdvancedSearchFilter {
                         page: searchPage
@@ -891,13 +1111,12 @@ Page {
             }
 
             FilterSection {
+                visible: !searchPage.compactFilters
                 title: qsTr("Languages")
                 value: searchPage.filterValueText("languages")
                 expanded: searchPage.openFilter === "languages"
                 flickable: listView
-                clearable: activeLanguages.length > 0
                 onClicked: searchPage.toggleFilter("languages")
-                onClearClicked: searchPage.clearFilter("languages")
                 contentComponent: Component {
                     AdvancedSearchFilter {
                         page: searchPage
@@ -910,13 +1129,12 @@ Page {
 
             // A station has only one country, so there is no "all must match"
             FilterSection {
+                visible: !searchPage.compactFilters
                 title: qsTr("Countries")
                 value: searchPage.filterValueText("countries")
                 expanded: searchPage.openFilter === "countries"
                 flickable: listView
-                clearable: activeCountryCodes.length > 0
                 onClicked: searchPage.toggleFilter("countries")
-                onClearClicked: searchPage.clearFilter("countries")
                 contentComponent: Component {
                     AdvancedSearchFilter {
                         page: searchPage
@@ -930,6 +1148,7 @@ Page {
             // entry, so "reset filters" sets it back explicitly
             ComboBox {
                 id: audioCombo
+                visible: !searchPage.compactFilters
                 width: parent.width
                 label: qsTr("Audio")
                 currentIndex: 0
@@ -948,6 +1167,7 @@ Page {
 
             ComboBox {
                 id: sortCombo
+                visible: !searchPage.compactFilters
                 width: parent.width
                 label: qsTr("Sort")
                 currentIndex: 0
@@ -965,6 +1185,7 @@ Page {
             }
 
             SectionHeader {
+                id: resultsSectionHeader
                 text: qsTr("Search results")
             }
         }
@@ -981,6 +1202,27 @@ Page {
         // Empty and error state below the filters
         footer: Column {
             width: listView.width
+
+            // Before the first search: say what to do (the list below the
+            // filters is empty and said nothing)
+            Column {
+                width: parent.width
+                visible: !searchPage.searchDone && !busy.running && searchResultsModel.count === 0
+                height: visible ? implicitHeight : 0
+                spacing: Theme.paddingMedium
+                topPadding: Theme.paddingLarge
+                bottomPadding: Theme.paddingLarge
+
+                Label {
+                    x: Theme.horizontalPageMargin
+                    width: parent.width - 2 * Theme.horizontalPageMargin
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.Wrap
+                    color: Theme.secondaryHighlightColor
+                    font.pixelSize: Theme.fontSizeSmall
+                    text: qsTr("Type a search term or choose genres, languages or countries. The results appear here.")
+                }
+            }
 
             Column {
                 width: parent.width
@@ -1006,8 +1248,9 @@ Page {
                           ? qsTr("Check your internet connection and try again.")
                           : qsTr("Try fewer filters or a different search term.")
                 }
-                Button {
-                    anchors.horizontalCenter: parent.horizontalCenter
+                ActionPill {
+                    kind: "secondary"
+                    x: Theme.horizontalPageMargin
                     visible: searchPage.searchFailed
                     text: qsTr("Try again")
                     onClicked: performAdvancedSearch(searchPage.searchFieldText, activeTags, activeLanguages, activeCountryCodes)
@@ -1078,6 +1321,67 @@ Page {
         id: searchResultsHintHideTimer
         interval: 8000
         onTriggered: searchResultsHint.dismiss()
+    }
+
+    Timer {
+        id: scrollToResultsTimer
+        interval: 300
+        onTriggered: searchPage.scrollToResults()
+    }
+
+    // The wish to scroll to the results is only valid for the search that
+    // followed "Search"; otherwise it would jump the list much later
+    Timer {
+        id: pendingExpireTimer
+        interval: 6000
+        onTriggered: searchPage.scrollToResultsPending = false
+    }
+
+    // While typing: the result count at the bottom edge of the page, above
+    // the PlayerBar and the keyboard (the live results are far below the
+    // filters). A tap closes the keyboard
+    // and scrolls to the results.
+    Rectangle {
+        id: resultCountBar
+        // While typing, and also after a tap on a chip: as long as the
+        // results (their heading) are below the visible area
+        readonly property bool resultsBelow: listView.headerItem
+            ? (listView.headerItem.y + listView.headerItem.resultsY
+               - listView.contentY) > listView.height - appWindow.playerBarHeight - height
+            : false
+        readonly property bool wanted: (Qt.inputMethod.visible || resultsBelow) && searchPage.searchDone
+                                       && !searchPage.searchFailed && !busy.running
+                                       && searchResultsModel.count > 0
+        anchors.bottom: parent.bottom
+        // The page already ends above the keyboard (Silica shrinks it), so
+        // no keyboard height here: the bar sits right above the PlayerBar
+        anchors.bottomMargin: appWindow.playerBarHeight
+        width: parent.width - appWindow.playerPanelWidth
+        height: Theme.itemSizeExtraSmall
+        z: 11
+        color: Theme.rgba(Theme.highlightBackgroundColor, 0.9)
+        opacity: wanted ? 1.0 : 0.0
+        visible: opacity > 0
+        Behavior on opacity { FadeAnimation { duration: 150 } }
+
+        Label {
+            anchors.centerIn: parent
+            // "100+" when the server list was cut at its limit
+            text: (searchPage.resultsTruncated
+                   ? qsTr("%1+ results").arg(searchResultsModel.count)
+                   : qsTr("%n result(s)", "", searchResultsModel.count)) + "  \u203a"
+            color: Theme.primaryColor
+            font.pixelSize: Theme.fontSizeSmall
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                searchPage.scrollToResultsPending = true
+                searchPage.forceActiveFocus()
+                scrollToResultsTimer.restart()
+            }
+        }
     }
 
     Timer {

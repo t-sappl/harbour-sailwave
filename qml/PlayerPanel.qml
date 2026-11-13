@@ -126,7 +126,7 @@ Rectangle {
 
     // --- Sleep timer durations ---
     property bool sleepSelectorOpen: false
-    readonly property var sleepOptions: [5, 10, 15, 30, 45, 60, 90]
+    readonly property var sleepOptions: [5, 10, 20, 30, 45, 60]   // as in Sailcast
 
     onShownChanged: if (!shown) sleepSelectorOpen = false
 
@@ -225,9 +225,11 @@ Rectangle {
                     x: artBox.width - width + overhang
                     y: artBox.height - height + overhang
                     radius: width * 0.22 * t
-                    color: Qt.rgba(1, 1, 1, t)
+                    // The tile comes from StationIcon itself
+                    color: "transparent"
 
                     StationIcon {
+                        shadow: artBox.hasAlbum
                         anchors.centerIn: parent
                         // Fixed size, scaled (as in the PlayerBar): a changing
                         // iconSize would reload the logo during the animation
@@ -305,6 +307,8 @@ Rectangle {
                     id: prevButton
                     anchors.verticalCenter: parent.verticalCenter
                     icon.source: "image://theme/icon-m-previous"
+                    // Landscape/car: a little larger, closer to the play button
+                    scale: 1.2
                     enabled: appWindow.canPlayNextFavorite
                     opacity: enabled ? 1.0 : 0.4
                     onClicked: appWindow.playPrevFavorite()
@@ -322,6 +326,7 @@ Rectangle {
                     id: nextButton
                     anchors.verticalCenter: parent.verticalCenter
                     icon.source: "image://theme/icon-m-next"
+                    scale: 1.2
                     enabled: appWindow.canPlayNextFavorite
                     opacity: enabled ? 1.0 : 0.4
                     onClicked: appWindow.playNextFavorite()
@@ -394,6 +399,27 @@ Rectangle {
                     }
                 }
 
+                BackgroundItem {
+                    id: otherOption
+                    width: Theme.itemSizeSmall * 1.2
+                    height: Theme.itemSizeSmall
+                    readonly property bool current: appWindow.sleepTimer.active
+                                                    && panel.sleepOptions.indexOf(appWindow.appSettings.sleepTimerMinutes) < 0
+
+                    Label {
+                        anchors.centerIn: parent
+                        text: "…"
+                        font.pixelSize: Theme.fontSizeSmall
+                        font.bold: otherOption.current
+                        color: (otherOption.current || otherOption.highlighted) ? Theme.highlightColor : Theme.primaryColor
+                    }
+
+                    onClicked: {
+                        panel.sleepSelectorOpen = false
+                        appWindow.chooseSleepTime()
+                    }
+                }
+
                 Item {
                     width: Theme.itemSizeSmall * 1.2
                     height: Theme.itemSizeSmall
@@ -419,11 +445,18 @@ Rectangle {
             }
 
             // --- Latest titles of the station ---
-            SectionHeader {
-                // SectionHeader brings its own page margins - undo them here
-                x: -Theme.horizontalPageMargin
-                width: column.width + 2 * Theme.horizontalPageMargin
+            // Own heading instead of a SectionHeader: its page margins did not
+            // fit the narrow column and the text sat flush at the screen edge
+            // in landscape; now it ends exactly at the column's right edge,
+            // like the cover and the buttons
+            Label {
+                width: parent.width
+                height: Theme.itemSizeExtraSmall
+                horizontalAlignment: Text.AlignRight
+                verticalAlignment: Text.AlignVCenter
                 text: qsTr("Track history")
+                font.pixelSize: Theme.fontSizeSmall
+                color: Theme.highlightColor
             }
 
             TrackPreview {

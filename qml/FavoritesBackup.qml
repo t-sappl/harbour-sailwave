@@ -83,7 +83,9 @@ Item {
     // Automatic sync switched on later (settings): check right away
     onWebdavEnabledChanged: if (webdavEnabled && _startChecked) syncNow(true)
 
-    function buildData() {
+    // reason / reasonDetail: why this state was saved (shown on the restore
+    // page): "restore", "delete-group" (detail: the group's name), "manual"
+    function buildData(reason, reasonDetail, withHistory) {
         var groupNames = {}
         var groups = []
         for (var g = 0; g < store.groups.length; g++) {
@@ -110,24 +112,38 @@ Item {
                 order: i
             })
         }
-        return {
+        var data = {
             format: "sailwave-favorites",
             version: 1,
             savedAt: new Date().toISOString(),
             groups: groups,
             favorites: favorites
         }
+        if (reason) {
+            data.reason = reason
+            data.reasonDetail = reasonDetail || ""
+        }
+        // Saved backups (not the automatic states and not the sync file)
+        // carry the track history as well
+        if (withHistory) {
+            data.trackHistory = appWindow.persistentState.exportTrackHistory()
+        }
+        return data
     }
 
     // forceNewVersion: always start a new backup state (before restoring
     // or deleting a group with its favourites)
-    function save(forceNewVersion) {
+    // skipUpload: not to the server (restore: the state before the restore
+    // must not replace the server file)
+    function save(forceNewVersion, skipUpload, reason, reasonDetail) {
         saveTimer.stop()
-        var text = JSON.stringify(buildData(), null, 2)
+        var text = JSON.stringify(buildData(reason, reasonDetail), null, 2)
         fileHelper.ensureDir(folder)
         var ok = fileHelper.writeText(jsonPath, text)
         writeVersion(text, forceNewVersion === true)
-        upload(text)
+        if (skipUpload !== true) {
+            upload(text)
+        }
         return ok
     }
 
@@ -155,15 +171,29 @@ Item {
         return list
     }
 
+    // Creation time of the newest automatic state (0 if there is none yet)
+    function lastStateTime() {
+        var list = versionFiles()
+        return list.length > 0 ? timeOf(list[0].name) : 0
+    }
+
+    // The state saved by a forced save (before restoring / deleting a group)
+    // is never updated in place: the automatic save two seconds later would
+    // overwrite the very copy the user was promised
+    property string pinnedVersionPath: ""
+
     function writeVersion(text, forceNew) {
         fileHelper.ensureDir(versionsDir)
         var list = versionFiles()
         var now = new Date()
-        if (!forceNew && list.length > 0 && now.getTime() - timeOf(list[0].name) < versionIntervalMs) {
+        if (!forceNew && list.length > 0 && list[0].path !== pinnedVersionPath
+                && now.getTime() - timeOf(list[0].name) < versionIntervalMs) {
             fileHelper.writeText(list[0].path, text)
             return
         }
-        fileHelper.writeText(versionsDir + "/favorites-" + stamp(now) + ".json", text)
+        var newPath = versionsDir + "/favorites-" + stamp(now) + ".json"
+        fileHelper.writeText(newPath, text)
+        pinnedVersionPath = forceNew ? newPath : ""
         list = versionFiles()
         for (var i = maxVersions; i < list.length; i++) {
             fileHelper.removeFile(list[i].path)
@@ -181,11 +211,107 @@ Item {
                     path: list[i].path,
                     time: timeOf(list[i].name),
                     favorites: data.favorites.length,
-                    groups: (data.groups || []).length
+                    groups: (data.groups || []).length,
+                    reason: data.reason || "",
+                    reasonDetail: data.reasonDetail || ""
                 })
             }
         }
         return result
+    }
+
+    // --- Checking a backup file (own file, from the server or picked) ---
+
+    function cleanText(v, max) {
+        return typeof v === "string" ? v.substring(0, max) : ""
+    }
+
+    // Stream addresses: only network schemes (no file://, javascript: ...)
+    function streamUrl(v) {
+        var s = cleanText(v, 2000)
+        return /^(https?|rtsp|mms|mmsh):\/\/\S+$/i.test(s) ? s : ""
+    }
+
+    function webUrl(v) {
+        var s = cleanText(v, 2000)
+        return /^https?:\/\/\S+$/i.test(s) ? s : ""
+    }
+
+    // Returns a cleaned copy { format, version, savedAt, groups, favorites }
+    // or null if the data are no Sailwave favourites backup. Entries of the
+    // wrong type or without a stream address are dropped, texts are cut.
+    function sanitizeBackup(data) {
+        if (!data || typeof data !== "object" || data.format !== "sailwave-favorites"
+                || !Array.isArray(data.favorites)) {
+            return null
+        }
+        var groups = []
+        var rawGroups = Array.isArray(data.groups) ? data.groups : []
+        for (var g = 0; g < rawGroups.length && g < 500; g++) {
+            var rg = rawGroups[g]
+            var gname = rg && typeof rg === "object" ? cleanText(rg.name, 100) : ""
+            if (gname.length > 0 && gname !== "__proto__") {
+                groups.push({ name: gname, order: Number(rg.order) || 0 })
+            }
+        }
+        var favs = []
+        for (var i = 0; i < data.favorites.length && i < 5000; i++) {
+            var f = data.favorites[i]
+            if (!f || typeof f !== "object") continue
+            var url = streamUrl(f.url)
+            if (!url) continue
+            var gn = cleanText(f.group, 100)
+            favs.push({
+                stationuuid: cleanText(f.stationuuid, 64),
+                name: cleanText(f.name, 200) || url,
+                url: url,
+                url_resolved: streamUrl(f.url_resolved),
+                homepage: webUrl(f.homepage),
+                favicon: webUrl(f.favicon),
+                country: cleanText(f.country, 100),
+                countrycode: cleanText(f.countrycode, 8),
+                language: cleanText(f.language, 200),
+                tags: cleanText(f.tags, 500),
+                codec: cleanText(f.codec, 20),
+                bitrate: Number(f.bitrate) || 0,
+                group: gn === "__proto__" ? "" : gn,
+                order: Number(f.order) || 0
+            })
+        }
+        var tracks = []
+        var rawTracks = Array.isArray(data.trackHistory) ? data.trackHistory : []
+        for (var h = 0; h < rawTracks.length && h < 500; h++) {
+            var tr = rawTracks[h]
+            if (!tr || typeof tr !== "object") continue
+            var ttl = cleanText(tr.title, 300)
+            var ts = Number(tr.timestamp)
+            if (!ttl || !isFinite(ts) || ts <= 0) continue
+            tracks.push({
+                title: ttl,
+                stationName: cleanText(tr.stationName, 200),
+                stationuuid: cleanText(tr.stationuuid, 64),
+                favicon: webUrl(tr.favicon),
+                url: streamUrl(tr.url),
+                url_resolved: streamUrl(tr.url_resolved),
+                homepage: webUrl(tr.homepage),
+                artUrl: webUrl(tr.artUrl),
+                albumName: cleanText(tr.albumName, 300),
+                genre: cleanText(tr.genre, 100),
+                itunesArtist: cleanText(tr.itunesArtist, 300),
+                itunesTitle: cleanText(tr.itunesTitle, 300),
+                timestamp: Math.floor(ts)
+            })
+        }
+        return {
+            format: "sailwave-favorites",
+            trackHistory: tracks,
+            version: Number(data.version) || 1,
+            savedAt: cleanText(data.savedAt, 40),
+            reason: cleanText(data.reason, 20),
+            reasonDetail: cleanText(data.reasonDetail, 100),
+            groups: groups,
+            favorites: favs
+        }
     }
 
     // null if the file is no Sailwave favourites backup
@@ -193,8 +319,8 @@ Item {
         var text = fileHelper.readText(path)
         if (!text) return null
         try {
-            var data = JSON.parse(text)
-            if (data && data.format === "sailwave-favorites" && Array.isArray(data.favorites)) {
+            var data = sanitizeBackup(JSON.parse(text))
+            if (data) {
                 return data
             }
         } catch (e) {
@@ -256,7 +382,7 @@ Item {
     // done(added): number of favourites added (merge) / restored (replace)
     function restore(data, done, mode) {
         var replace = mode === "replace"
-        save(true)
+        save(true, true, "restore")
         var groupNames = (data.groups || []).slice()
                 .sort(function(a, b) { return (a.order || 0) - (b.order || 0) })
                 .map(function(g) { return g.name })
@@ -279,6 +405,12 @@ Item {
             } else {
                 count = store.addMany(entries, groupNames)
             }
+            // Track history of the backup is always added (never deleted)
+            if (data.trackHistory && data.trackHistory.length > 0) {
+                if (appWindow.persistentState.importTrackHistory(data.trackHistory) > 0) {
+                    appWindow.trackHistoryUpdated()
+                }
+            }
             if (done) done(count)
         }
         if (uuids.length === 0) {
@@ -287,32 +419,58 @@ Item {
         }
         // Fresh data from radio-browser (stream URLs may have changed);
         // without an answer the saved data is used
-        RadioApi.requestJson(RadioApi.apiUrl("stations/byuuid?uuids=") + uuids.join(","),
-                             appWindow.apiUserAgent, function(list) {
-            if (list) {
-                var byUuid = {}
-                for (var j = 0; j < list.length; j++) byUuid[list[j].stationuuid] = list[j]
-                for (var k = 0; k < entries.length; k++) {
-                    var fresh = byUuid[entries[k].station.stationuuid]
-                    if (fresh) {
-                        entries[k].station = {
-                            stationuuid: fresh.stationuuid,
-                            name: fresh.name || entries[k].station.name,
-                            url: fresh.url || entries[k].station.url,
-                            url_resolved: fresh.url_resolved || "",
-                            homepage: fresh.homepage || "",
-                            favicon: fresh.favicon || "",
-                            country: fresh.country || "",
-                            countrycode: fresh.countrycode || "",
-                            language: fresh.language || "",
-                            tags: fresh.tags || "",
-                            codec: fresh.codec || "",
-                            bitrate: fresh.bitrate || 0
-                        }
-                    }
+        function takeFresh(entry, fresh) {
+            entry.station = {
+                stationuuid: fresh.stationuuid,
+                name: RadioApi.cleanName(fresh.name) || entry.station.name,
+                url: fresh.url || entry.station.url,
+                url_resolved: fresh.url_resolved || "",
+                homepage: fresh.homepage || "",
+                favicon: fresh.favicon || "",
+                country: fresh.country || "",
+                countrycode: fresh.countrycode || "",
+                language: fresh.language || "",
+                tags: fresh.tags || "",
+                codec: fresh.codec || "",
+                bitrate: fresh.bitrate || 0
+            }
+        }
+        RadioApi.requestByUuids(uuids, appWindow.apiUserAgent, function(list) {
+            if (!list) {
+                finish()
+                return
+            }
+            var byUuid = {}
+            for (var j = 0; j < list.length; j++) byUuid[list[j].stationuuid] = list[j]
+            var lost = []
+            for (var k = 0; k < entries.length; k++) {
+                var uuid = entries[k].station.stationuuid
+                var fresh = byUuid[uuid]
+                if (fresh) {
+                    takeFresh(entries[k], fresh)
+                } else if (uuid && uuids.indexOf(uuid) >= 0) {
+                    lost.push(entries[k])
                 }
             }
-            finish()
+            if (lost.length === 0) {
+                finish()
+                return
+            }
+            // Not under their UUID any more: by stream URL, then by name and
+            // country. Group and position of the entry stay.
+            RadioApi.findReplacements(lost.map(function(e) { return e.station }),
+                                      appWindow.apiUserAgent, 60, function(found) {
+                var taken = {}
+                for (var m = 0; m < lost.length; m++) {
+                    var r = found[m]
+                    // never two entries for one station
+                    if (r && !taken[r.stationuuid] && !byUuid[r.stationuuid]) {
+                        taken[r.stationuuid] = true
+                        takeFresh(lost[m], r)
+                    }
+                }
+                finish()
+            })
         })
     }
 
@@ -327,7 +485,25 @@ Item {
 
     // format "json" or "m3u"
     function backupText(format) {
-        return format === "m3u" ? m3uText() : JSON.stringify(buildData(), null, 2)
+        return format === "m3u" ? m3uText() : JSON.stringify(buildData("manual", "", true), null, 2)
+    }
+
+    // At most this many saved backups (sailwave-backup-*.json) are kept: the
+    // oldest are removed after a new one (many taps on "Back up now" made the
+    // list unreadable). Playlists (.m3u) are not touched.
+    readonly property int maxManualBackups: 10
+
+    function pruneManualBackups() {
+        var files = fileHelper.listDir(folder, ["sailwave-backup-*.json"]).filter(function(e) { return !e.isDir })
+        files.sort(function(a, b) { return b.name < a.name ? -1 : (b.name > a.name ? 1 : 0) })
+        for (var i = maxManualBackups; i < files.length; i++) {
+            fileHelper.removeFile(files[i].path)
+        }
+    }
+
+    // One backup (automatic state or saved backup) from the restore page
+    function removeBackupFile(path) {
+        return fileHelper.removeFile(path)
     }
 
     // To this device: Documents/Sailwave, next to the current file, as
@@ -337,7 +513,11 @@ Item {
         fileHelper.ensureDir(folder)
         var path = folder + (format === "m3u" ? "/sailwave-playlist-" : "/sailwave-backup-")
                 + fileStamp(new Date()) + (format === "m3u" ? ".m3u" : ".json")
-        return fileHelper.writeText(path, backupText(format)) ? path : ""
+        var ok = fileHelper.writeText(path, backupText(format))
+        if (ok && format !== "m3u") {
+            pruneManualBackups()
+        }
+        return ok ? path : ""
     }
 
     // Time of a manual backup from its name (0 if the name does not match)
@@ -346,6 +526,18 @@ Item {
         if (!m) return 0
         return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]),
                         Number(m[4]), Number(m[5])).getTime()
+    }
+
+    // Time of the newest manual backup file (0 if there is none); only the
+    // file names are read, not the files
+    function lastManualTime() {
+        var files = fileHelper.listDir(folder, ["sailwave-backup-*.json"]).filter(function(e) { return !e.isDir })
+        var newest = 0
+        for (var i = 0; i < files.length; i++) {
+            var t = manualTimeOf(files[i].name) || files[i].modified
+            if (t > newest) newest = t
+        }
+        return newest
     }
 
     // For the restore page: the manual backups in Documents/Sailwave,
@@ -361,7 +553,9 @@ Item {
                     path: files[i].path,
                     time: manualTimeOf(files[i].name) || files[i].modified,
                     favorites: data.favorites.length,
-                    groups: (data.groups || []).length
+                    groups: (data.groups || []).length,
+                    reason: data.reason || "",
+                    reasonDetail: data.reasonDetail || ""
                 })
             }
         }
@@ -402,9 +596,7 @@ Item {
             }
             var data = null
             try { data = JSON.parse(body) } catch (e) { data = null }
-            if (!data || data.format !== "sailwave-favorites" || !Array.isArray(data.favorites)) {
-                data = null
-            }
+            data = sanitizeBackup(data)
             done(data, status, etag)
         })
     }

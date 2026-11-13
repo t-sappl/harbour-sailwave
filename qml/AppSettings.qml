@@ -71,6 +71,8 @@ QtObject {
     // where the other favourite options are (first "Move" on the start page)
     property bool ringHintShown: false
     property bool moveHintShown: false
+    // Last of the one-time hints: press and hold a station row for its menu
+    property bool longPressHintShown: false
     // After the station info hint: the arrow expands the PlayerBar (recent
     // tracks, sleep timer); advanced search: where the results appear
     property bool playerBarExpandHintShown: false
@@ -84,6 +86,9 @@ QtObject {
     property bool googleLogoFallback: true
     // Save played tracks in the track history
     property bool trackHistoryEnabled: true
+    // Stations whose titles are not recorded (news/talk stations that only
+    // send text): station ids (stationuuid or stream address), one per line
+    property string noRecordStations: ""
     // Maximum number of stored tracks
     property int trackHistoryLimit: 100
 
@@ -107,11 +112,13 @@ QtObject {
         playerBarHintShown: "bool",
         ringHintShown: "bool",
         moveHintShown: "bool",
+        longPressHintShown: "bool",
         playerBarExpandHintShown: "bool",
         searchResultsHintShown: "bool",
         googleLogoFallback: "bool",
         trackArtEnabled: "bool",
         trackHistoryEnabled: "bool",
+        noRecordStations: "string",
         trackHistoryLimit: "int"
     })
 
@@ -139,6 +146,7 @@ QtObject {
     onPlayerBarHintShownChanged: save("playerBarHintShown")
     onRingHintShownChanged: save("ringHintShown")
     onMoveHintShownChanged: save("moveHintShown")
+    onLongPressHintShownChanged: save("longPressHintShown")
     onPlayerBarExpandHintShownChanged: save("playerBarExpandHintShown")
     onSearchResultsHintShownChanged: save("searchResultsHintShown")
     onGoogleLogoFallbackChanged: save("googleLogoFallback")
@@ -148,11 +156,13 @@ QtObject {
         playerBarHintShown = false
         ringHintShown = false
         moveHintShown = false
+        longPressHintShown = false
         playerBarExpandHintShown = false
         searchResultsHintShown = false
     }
     onTrackArtEnabledChanged: save("trackArtEnabled")
     onTrackHistoryEnabledChanged: save("trackHistoryEnabled")
+    onNoRecordStationsChanged: save("noRecordStations")
     onTrackHistoryLimitChanged: save("trackHistoryLimit")
 
     Component.onCompleted: ensureLoaded()
