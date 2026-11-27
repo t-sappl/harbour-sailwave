@@ -21,9 +21,14 @@ QT += network multimedia
 PKGCONFIG += sailfishsecrets
 INCLUDEPATH += /usr/include/Sailfish
 
+# Sailplay SDK v1 (provider side, copied from Sailplay - see
+# sailplay-sdk/README.md): Sailwave in the car with Sailplay
+include(sailplay-sdk/sailplay-sdk.pri)
+
 SOURCES += src/harbour-sailwave.cpp \
     src/artcomposer.cpp \
     src/nextcloudlogin.cpp \
+    src/sailplaybridge.cpp \
     src/secretstore.cpp \
     src/webdavclient.cpp
 
@@ -32,12 +37,14 @@ HEADERS += \
     src/filehelper.h \
     src/networkaccess.h \
     src/nextcloudlogin.h \
+    src/sailplaybridge.h \
     src/secretstore.h \
     src/webdavclient.h
 
 # Listed only so that Qt Creator shows them in the project tree.
 # Installation is handled by CONFIG += sailfishapp (the whole qml/ folder).
 OTHER_FILES += rpm/harbour-sailwave-radio.spec \
+    sailplay-sdk/README.md \
     harbour-sailwave-radio.desktop \
     qml/harbour-sailwave.qml \
     qml/AppSettings.qml \

@@ -782,6 +782,52 @@
     </message>
 </context>
 <context>
+    <name>SailplayBridge</name>
+    <message>
+        <source>Favorites</source>
+        <translation>Favoriten</translation>
+    </message>
+    <message>
+        <source>Station history</source>
+        <translation>Senderverlauf</translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation>Suche</translation>
+    </message>
+    <message>
+        <source>No stations found</source>
+        <translation>Keine Sender gefunden</translation>
+    </message>
+    <message>
+        <source>Group</source>
+        <translation>Gruppe</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n stations</source>
+        <translation>
+            <numerusform>%n Sender</numerusform>
+            <numerusform>%n Sender</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Other favorites</source>
+        <translation>Weitere Favoriten</translation>
+    </message>
+    <message>
+        <source>No favorites yet</source>
+        <translation>Noch keine Favoriten</translation>
+    </message>
+    <message>
+        <source>No station played yet</source>
+        <translation>Noch kein Sender gehört</translation>
+    </message>
+    <message>
+        <source>%1 kbps</source>
+        <translation>%1 kbit/s</translation>
+    </message>
+</context>
+<context>
     <name>SettingsBackupPage</name>
     <message>
         <source>never</source>

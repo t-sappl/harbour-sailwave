@@ -2,6 +2,17 @@
 
 Package: `harbour-sailwave-radio` · License GPL-3.0-or-later
 
+## Unreleased – Car screen (Sailplay) and reliable resume
+
+### New
+- Sailplay (wireless CarPlay for Sailfish OS): Favorites (with their groups), Station history and a search are offered on the car screen; tapping a station plays it, and the car can start Sailwave. The Jolla Store build has it too: Sailwave needs no extra sandbox profile for it.
+
+### Fixed
+- After a phone call or an announcement of the car, Sailfish resumed the paused stream, which had gone stale: playback failed with "Internal data stream error". Any resume now joins the live stream again, as if the station had just been opened.
+- Reconnects did not reconnect: setting the same stream address again kept the broken player, so the three attempts failed the same way. They now open the stream anew, after 2, 4 and 6 seconds.
+- A paused stream that fails (paused by the user, a call or another player such as a podcast app) no longer starts playing again behind the other player.
+- Log lines `[Stream]` (debug level) for pauses, resumes, reopens and reconnects.
+
 ## 1.2.1-1 – Bugfix (November 2026)
 
 ### Fixed
